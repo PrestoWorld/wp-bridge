@@ -276,6 +276,9 @@ if (!function_exists('is_page')) {
         $post = $GLOBALS['__presto_current_post'] ?? null;
         if (!$post || $post->type !== 'page') return false;
         if (empty($page)) return true;
+        if (is_object($page)) {
+            return $post->id === ($page->id ?? 0);
+        }
         return ($post->slug === $page || $post->id == $page || $post->title === $page);
     }
 }
@@ -285,6 +288,9 @@ if (!function_exists('is_single')) {
         $post = $GLOBALS['__presto_current_post'] ?? null;
         if (!$post || $post->type !== 'post') return false;
         if (empty($post_val)) return true;
+        if (is_object($post_val)) {
+            return $post->id === ($post_val->id ?? 0);
+        }
         return ($post->slug === $post_val || $post->id == $post_val || $post->title === $post_val);
     }
 }
@@ -327,14 +333,15 @@ if (!function_exists('get_permalink')) {
         $post_obj = null;
         
         // Optimization: If a Post object is passed, use it directly (prevents N+1)
-        if ($post_id instanceof \App\Models\Post) {
+        if (is_object($post_id)) {
             $post_obj = $post_id;
         } elseif (!$post_id) {
             $post_obj = $GLOBALS['__presto_current_post'] ?? null;
         } else {
             $orm = app(\Cycle\ORM\ORMInterface::class);
             $repo = $orm->getRepository(\App\Models\Post::class);
-            $post_obj = $repo->findOne(['id' => (int)$post_id]);
+            $post_id_val = is_numeric($post_id) ? (int)$post_id : $post_id;
+            $post_obj = $repo->findOne(['id' => $post_id_val]);
         }
 
         if (!$post_obj) return '';
