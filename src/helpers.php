@@ -126,12 +126,55 @@ if (!function_exists('wp_mail')) {
 
 if (!function_exists('add_menu_page')) {
     function add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function = '', $icon_url = '', $position = null) {
-        // Implementation logic for custom admin menus goes here
-        // For now, if we are in strict mode and trying to do complex menu stuff:
-        if (empty($function) && env('WP_BRIDGE_STRICT', true)) {
-             throw WordPressCompatibilityException::notImplemented('add_menu_page with empty callback');
-        }
+        $repo = app(\PrestoWorld\Admin\MenuRepository::class);
+        $repo->addMenu(new \PrestoWorld\Admin\Menu(
+            $page_title,
+            $menu_title,
+            $capability,
+            $menu_slug,
+            $function,
+            $icon_url,
+            $position
+        ));
         return "toplevel_page_{$menu_slug}";
+    }
+}
+
+if (!function_exists('add_submenu_page')) {
+    function add_submenu_page($parent_slug, $page_title, $menu_title, $capability, $menu_slug, $function = '', $position = null) {
+        $repo = app(\PrestoWorld\Admin\MenuRepository::class);
+        $repo->addSubMenu(new \PrestoWorld\Admin\SubMenu(
+            $parent_slug,
+            $page_title,
+            $menu_title,
+            $capability,
+            $menu_slug,
+            $function,
+            $position
+        ));
+        return "{$parent_slug}_page_{$menu_slug}";
+    }
+}
+
+if (!function_exists('wp_add_dashboard_widget')) {
+    function wp_add_dashboard_widget($widget_id, $widget_name, $callback, $control_callback = null, $callback_args = null) {
+        $repo = app(\PrestoWorld\Admin\DashboardWidgetRepository::class);
+        $repo->addWidget(new \PrestoWorld\Admin\DashboardWidget(
+            $widget_id,
+            $widget_name,
+            $callback,
+            $control_callback,
+            $callback_args ?? []
+        ));
+    }
+}
+
+if (!function_exists('get_current_screen')) {
+    function get_current_screen() {
+        return (object)[
+            'id' => $GLOBALS['__presto_admin_context']['screen'] ?? 'dashboard',
+            'base' => $GLOBALS['__presto_admin_context']['screen'] ?? 'dashboard',
+        ];
     }
 }
 

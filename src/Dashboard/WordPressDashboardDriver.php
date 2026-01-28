@@ -31,21 +31,22 @@ class WordPressDashboardDriver implements DashboardDriver
         $prefix = $this->getRoutePrefix();
 
         // Dashboard Home
-        $router->get($prefix, function () {
-            // Immutability: Admin context
-            $GLOBALS['__presto_admin_context'] = ['driver' => 'wordpress', 'screen' => 'dashboard'];
-            
-            // In a real implementation, this would render a view similar to WP Admin
-            return Response::html('<h1>Simulated WP Dashboard</h1><p>Welcome to your simulated WordPress admin panel.</p>');
-        });
+        $router->get($prefix, [\Prestoworld\Bridge\WordPress\Http\Controllers\DashboardController::class, 'index']);
+        $router->get($prefix . '/', [\Prestoworld\Bridge\WordPress\Http\Controllers\DashboardController::class, 'index']);
+        $router->get($prefix . '/index.php', [\Prestoworld\Bridge\WordPress\Http\Controllers\DashboardController::class, 'index']);
 
+        // Dynamic Admin Pages (edit.php, options-general.php, etc.)
+        $router->get($prefix . '/{page}.php', [\Prestoworld\Bridge\WordPress\Http\Controllers\DashboardController::class, 'show']);
+        
         // Options Page Handling (Simulated options.php)
-        $router->post($prefix . '/options.php', function ($request) {
-            // Handle simulated settings saving
-            // Verify capabilities, nonces, etc.
-            
-            // Redirect back to referring page
-            return Response::redirect($request->header('referer') ?? '/wp-admin');
-        });
+        $router->post($prefix . '/options.php', [\Prestoworld\Bridge\WordPress\Http\Controllers\DashboardController::class, 'saveOptions']);
+        
+        // Admin Ajax
+        $router->post($prefix . '/admin-ajax.php', [\Prestoworld\Bridge\WordPress\Http\Controllers\DashboardController::class, 'ajax']);
+        $router->get($prefix . '/admin-ajax.php', [\Prestoworld\Bridge\WordPress\Http\Controllers\DashboardController::class, 'ajax']);
+
+        // Catch-all for any other admin .php files
+        $router->get($prefix . '/{any}', [\Prestoworld\Bridge\WordPress\Http\Controllers\DashboardController::class, 'show'])
+               ->where('any', '.*\.php$');
     }
 }
