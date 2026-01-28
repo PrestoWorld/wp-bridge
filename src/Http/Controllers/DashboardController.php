@@ -91,14 +91,22 @@ class DashboardController
         // 3. Look in PrestoWorld Menu Repository
         foreach ($menus as $menu) {
             if ($menu->menuSlug === $slug && $menu->callback) {
-                $content = $this->renderer->renderHybrid($menu->callback);
+                if (is_callable($menu->callback)) {
+                    $content = $this->renderer->renderHybrid($menu->callback);
+                } else {
+                    $content = "<div class='notice notice-error'><p>Error: Callback function <code>" . (is_string($menu->callback) ? $menu->callback : 'Array') . "</code> not found.</p></div>";
+                }
                 return Response::html($this->renderAdminLayout($menu->pageTitle, $content, $menus));
             }
             
             $subs = $this->menuRepo->getSubMenus($menu->menuSlug);
             foreach ($subs as $sub) {
                 if ($sub->menuSlug === $slug && $sub->callback) {
-                    $content = $this->renderer->renderHybrid($sub->callback);
+                    if (is_callable($sub->callback)) {
+                        $content = $this->renderer->renderHybrid($sub->callback);
+                    } else {
+                        $content = "<div class='notice notice-error'><p>Error: Callback function <code>" . (is_string($sub->callback) ? $sub->callback : 'Array') . "</code> not found.</p></div>";
+                    }
                     return Response::html($this->renderAdminLayout($sub->pageTitle, $content, $menus));
                 }
             }
@@ -356,9 +364,9 @@ class DashboardController
         <head>
             <meta charset='UTF-8'>
             <title>{$title} &lsaquo; PrestoWorld &#8212; WordPress</title>
-            <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/WordPress/dashicons/icon-assets/dashicons.css'>
+            <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/@icon/dashicons@0.9.7/dashicons.min.css'>
             <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans:400,600&display=swap'>
-            <link rel="stylesheet" href="/css/admin-core.css">
+            <link rel='stylesheet' href='/css/admin-core.css'>
             <!-- PrestoWorld SolidJS Admin Core -->
             <script type=\"module\" src=\"/js/admin-solid-core.js\"></script>
         </head>
