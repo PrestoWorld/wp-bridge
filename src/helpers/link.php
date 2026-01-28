@@ -52,3 +52,18 @@ if (!function_exists('the_permalink')) {
         echo apply_filters('the_permalink', get_permalink($post_id));
     }
 }
+
+if (!function_exists('admin_url')) {
+    function admin_url($path = '', $scheme = 'admin') {
+        return home_url('/wp-admin/' . ltrim($path, '/'));
+    }
+}
+
+if (!function_exists('get_edit_post_link')) {
+    function get_edit_post_link($id = 0, $context = 'display') {
+        if (!$id && isset($GLOBALS['post'])) {
+             $id = $GLOBALS['post']->ID;
+        }
+        return admin_url("post.php?post=$id&action=edit");
+    }
+}

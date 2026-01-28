@@ -68,6 +68,7 @@ if (!function_exists('the_title')) {
 
 if (!function_exists('the_content')) {
     function the_content($more_link_text = null, $strip_teaser = false) {
+        // ... (kept logic from view)
         static $recursionCount = 0;
         if ($recursionCount > 2) return;
         $recursionCount++;
@@ -82,5 +83,11 @@ if (!function_exists('the_content')) {
         
         $recursionCount--;
         echo $content;
+    }
+}
+
+if (!function_exists('get_the_author_meta')) {
+    function get_the_author_meta($field = '', $user_id = false) {
+        return 'Admin'; // Mock
     }
 }

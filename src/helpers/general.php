@@ -31,3 +31,44 @@ if (!function_exists('get_current_screen')) {
         ];
     }
 }
+
+if (!function_exists('esc_html')) {
+    function esc_html($text) {
+        return htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('esc_attr')) {
+    function esc_attr($text) {
+        return htmlspecialchars((string)$text, ENT_QUOTES, 'UTF-8');
+    }
+}
+
+if (!function_exists('number_format_i18n')) {
+    function number_format_i18n($number, $decimals = 0) {
+        return number_format((float)$number, $decimals);
+    }
+}
+
+if (!function_exists('add_query_arg')) {
+    function add_query_arg(...$args) {
+        // Simplified implementation
+        if (is_array($args[0])) {
+            $params = $args[0];
+            $url = $args[1] ?? $_SERVER['REQUEST_URI'] ?? '';
+        } else {
+             $params = [$args[0] => $args[1]];
+             $url = $args[2] ?? $_SERVER['REQUEST_URI'] ?? '';
+        }
+        
+        $parts = parse_url($url);
+        $query = [];
+        if (isset($parts['query'])) {
+            parse_str($parts['query'], $query);
+        }
+        $query = array_merge($query, $params);
+        
+        $query_str = http_build_query($query);
+        return ($parts['path'] ?? '') . '?' . $query_str;
+    }
+}

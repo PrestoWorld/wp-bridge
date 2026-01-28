@@ -74,14 +74,27 @@ class DashboardController
 
     protected function handlePluginPage(string $slug, array $menus): Response
     {
-        // Look in Top Level Menus
+        // 1. Ensure WP is loaded & Hooks are fired FIRST
+        $wpLoader = app(\Prestoworld\Bridge\WordPress\WordPressLoader::class);
+        if (!$wpLoader->isLoaded()) {
+            $wpLoader->load();
+        }
+
+        // Ensure admin menu hooks are fired
+        if (\function_exists('did_action') && !\did_action('admin_menu')) {
+            \do_action('admin_menu');
+        }
+
+        // 2. Refresh Menus from Repository (Pickup newly registered plugin pages)
+        $menus = $this->menuRepo->getMenus();
+
+        // 3. Look in PrestoWorld Menu Repository
         foreach ($menus as $menu) {
             if ($menu->menuSlug === $slug && $menu->callback) {
                 $content = $this->renderer->renderHybrid($menu->callback);
                 return Response::html($this->renderAdminLayout($menu->pageTitle, $content, $menus));
             }
             
-            // Look in Sub Menus
             $subs = $this->menuRepo->getSubMenus($menu->menuSlug);
             foreach ($subs as $sub) {
                 if ($sub->menuSlug === $slug && $sub->callback) {
@@ -91,7 +104,67 @@ class DashboardController
             }
         }
 
-        return Response::html($this->renderAdminLayout('Error', "<div class='error'><p>Standard WordPress Admin Page or Plugin page not found.</p></div>", $menus));
+        // 4. Fallback: Look in WordPress Globals ($menu, $submenu)
+        global $menu, $submenu;
+        
+        // Check Top Level
+        if (isset($menu)) {
+            foreach ($menu as $item) {
+                // $item structure: [0 => Name, 1 => Cap, 2 => Slug/Callback, 3 => Page Title, ... ]
+                if (isset($item[2]) && $item[2] === $slug) {
+                    return $this->renderWPCallbackPage($slug, $item[3] ?? $item[0], $menus);
+                }
+            }
+        }
+
+        // Check Submenus
+        if (isset($submenu)) {
+            foreach ($submenu as $parent => $items) {
+                foreach ($items as $item) {
+                    // $item structure: [0 => Title, 1 => Cap, 2 => Slug, 3 => Page Title ]
+                    if (isset($item[2]) && $item[2] === $slug) {
+                         return $this->renderWPCallbackPage($slug, $item[3] ?? $item[0], $menus);
+                    }
+                }
+            }
+        }
+
+        $safeSlug = \function_exists('esc_html') ? \esc_html($slug) : \htmlspecialchars($slug);
+        return Response::html($this->renderAdminLayout('Error', "<div class='error'><p>Standard WordPress Admin Page or Plugin page not found: <code>".$safeSlug."</code></p></div>", $menus));
+    }
+
+    protected function renderWPCallbackPage(string $slug, string $title, array $menus): Response
+    {
+        if (!\function_exists('do_action')) {
+            return Response::html($this->renderAdminLayout('Error', "<div class='error'><p>WordPress core could not be loaded.</p></div>", $menus));
+        }
+
+        ob_start();
+        do_action($slug); // Some plugins hook direct to slug? No usually it's derived.
+        
+        // Try to find the hookname associated with this page
+        // add_menu_page calls add_action( $hookname, $function );
+        // The hookname is returned by add_menu_page but not stored easily in global $menu directly as callback.
+        // WP stores it in global $admin_page_hooks['slug'].
+        global $admin_page_hooks;
+        
+        if (isset($admin_page_hooks[$slug])) {
+            $hook_name = $admin_page_hooks[$slug];
+            // Render
+            do_action($hook_name);
+        } else {
+            // Fallback: maybe the slug itself is an action (old style) or check 'toplevel_page_$slug'
+            if (has_action('toplevel_page_' . $slug)) {
+                do_action('toplevel_page_' . $slug);
+            } elseif (has_action($slug)) {
+                do_action($slug);
+            } else {
+                 echo "<p>Could not locate callback for slug: {$slug}</p>";
+            }
+        }
+
+        $content = ob_get_clean();
+        return Response::html($this->renderAdminLayout($title, $content, $menus));
     }
 
     protected function handleEditPage(\Witals\Framework\Http\Request $request, array $menus): Response
@@ -285,89 +358,9 @@ class DashboardController
             <title>{$title} &lsaquo; PrestoWorld &#8212; WordPress</title>
             <link rel='stylesheet' href='https://cdn.jsdelivr.net/gh/WordPress/dashicons/icon-assets/dashicons.css'>
             <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans:400,600&display=swap'>
-            <style>
-                body { background: #f0f0f1; color: #3c434a; font-family: \"Open Sans\",sans-serif; margin: 0; font-size: 13px; }
-                #wpwrap { height: auto; min-height: 100vh; width: 100%; position: relative; }
-                
-                /* Admin Bar */
-                #wpadminbar { height: 32px; background: #1d2327; color: #c3c4c7; width: 100%; position: fixed; top: 0; left: 0; z-index: 99999; }
-                
-                /* Menu Sidebar */
-                #adminmenumain { width: 160px; background: #1d2327; position: fixed; top: 32px; bottom: 0; left: 0; z-index: 9990; }
-                #adminmenu { list-style: none; margin: 0; padding: 12px 0 0; }
-                #adminmenu li { margin: 0; padding: 0; position: relative; }
-                #adminmenu a { display: block; padding: 0; color: #f0f0f1; text-decoration: none; font-size: 14px; line-height: 1.3; }
-                
-                #adminmenu li.menu-top { min-height: 34px; border: none; }
-                #adminmenu li.menu-top > a { padding: 8px 12px 8px 0; display: block; }
-                
-                /* Active Menu State */
-                #adminmenu li.wp-has-current-submenu > a, 
-                #adminmenu li.current > a { background: #2271b1 !important; color: #fff !important; }
-                #adminmenu li.wp-has-current-submenu .wp-menu-image:before,
-                #adminmenu li.current .wp-menu-image:before { color: #fff !important; }
-                
-                /* Arrow Indicator */
-                .wp-menu-arrow { display: none; content: \"\"; position: absolute; right: 0; top: 7px; width: 0; height: 0; border-top: 10px solid transparent; border-bottom: 10px solid transparent; border-right: 10px solid #f0f0f1; z-index: 10; }
-                #adminmenu li.wp-has-current-submenu .wp-menu-arrow,
-                #adminmenu li.current .wp-menu-arrow { display: block; }
-                
-                #adminmenu li.menu-top:hover { background: #2c3338; color: #72aee6; }
-                #adminmenu li.menu-top:hover .wp-menu-image:before { color: #72aee6; }
-
-                #adminmenu .wp-menu-image { float: left; width: 36px; height: 34px; text-align: center; color: #a7aaad; display: flex; align-items: center; justify-content: center; }
-                #adminmenu .wp-menu-image:before { font: normal 20px/1 dashicons !important; display: inline-block; -webkit-font-smoothing: antialiased; }
-                #adminmenu .wp-menu-name { padding: 8px 0; }
-
-                /* Submenu */
-                .wp-submenu { list-style: none; margin: 0; padding: 7px 0 8px; background: #2c3338; }
-                .wp-submenu li { padding: 0; }
-                .wp-submenu a { color: rgba(240,240,241,.7); font-size: 13px; padding: 5px 0 5px 36px; display: block; }
-                .wp-submenu a:hover { color: #72aee6; }
-                .wp-submenu li.current a { color: #fff; font-weight: 600; }
-                
-                /* Hover Submenu behavior (for closed menus) */
-                #adminmenu li.menu-top:not(.wp-menu-open):hover .wp-submenu { 
-                    display: block !important; 
-                    position: absolute; 
-                    left: 160px; 
-                    top: 0; 
-                    width: 160px; 
-                    box-shadow: 0 3px 5px rgba(0,0,0,0.2);
-                    padding: 10px 0;
-                }
-                #adminmenu li.menu-top:not(.wp-menu-open):hover .wp-submenu li a { padding-left: 15px; }
-
-                /* Notifications */
-                .update-plugins { display: inline-block; background: #d63638; color: #fff; border-radius: 10px; padding: 0 6px; font-size: 9px; line-height: 17px; font-weight: 600; margin-left: 4px; vertical-align: top; }
-                
-                /* Content Area */
-                #wpcontent { margin-left: 160px; padding-top: 32px; flex: 1; }
-                #wpbody-content { padding: 0 20px 20px; }
-                .wrap { margin: 10px 20px 0 2px; }
-                .wrap h1 { font-size: 23px; font-weight: 400; margin: 0; padding: 9px 0 4px; line-height: 1.3; color: #1d2327; }
-                
-                /* Classic WP Elements */
-                .wp-list-table { border: 1px solid #c3c4c7; border-spacing: 0; width: 100%; clear: both; background: #fff; margin-top: 20px; box-shadow: 0 1px 1px rgba(0,0,0,.04); }
-                .wp-list-table th, .wp-list-table td { padding: 8px 10px; border-bottom: 1px solid #f0f0f1; text-align: left; vertical-align: top; }
-                .wp-list-table thead td, .wp-list-table thead th { border-bottom: 1px solid #c3c4c7; background: #fff; font-weight: 600; }
-                
-                .button-primary { background: #2271b1; border-color: #2271b1; color: #fff; text-decoration: none; text-shadow: none; display: inline-block; padding: 4px 12px; border-radius: 3px; border-width: 1px; border-style: solid; cursor: pointer; font-size: 13px; line-height: 2; height: 32px; min-height: 32px; }
-                .button-primary:hover { background: #135e96; border-color: #135e96; }
-                
-                /* Dashboard Widgets */
-                .metabox-holder { display: flex; flex-wrap: wrap; margin-top: 20px; gap: 20px; }
-                .postbox { border: 1px solid #c3c4c7; background: #fff; width: calc(50% - 10px); min-width: 300px; box-shadow: 0 1px 1px rgba(0,0,0,.04); }
-                .postbox .postbox-header { border-bottom: 1px solid #f0f0f1; padding: 0 12px; height: 36px; display: flex; align-items: center; }
-                .postbox .postbox-header h2 { font-size: 14px; margin: 0; font-weight: 600; }
-                .postbox .inside { padding: 12px; margin: 0; }
-                
-                /* Form Table */
-                .form-table { border-collapse: collapse; margin-top: .5em; width: 100%; clear: both; }
-                .form-table th { vertical-align: top; text-align: left; padding: 20px 10px 20px 0; width: 200px; font-weight: 600; }
-                .form-table td { margin-bottom: 9px; padding: 15px 10px; line-height: 1.3; vertical-align: middle; }
-                input[type=text], input[type=email] { border: 1px solid #8c8f94; border-radius: 4px; padding: 0 8px; min-height: 30px; width: 25em; box-shadow: inset 0 1px 2px rgba(0,0,0,.07); }
-            </style>
+            <link rel="stylesheet" href="/css/admin-core.css">
+            <!-- PrestoWorld SolidJS Admin Core -->
+            <script type=\"module\" src=\"/js/admin-solid-core.js\"></script>
         </head>
         <body class='wp-admin wp-core-ui'>
             <div id='wpwrap'>

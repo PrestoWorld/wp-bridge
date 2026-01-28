@@ -74,3 +74,17 @@ if (!function_exists('remove_all_actions')) {
         return true;
     }
 }
+
+if (!function_exists('did_action')) {
+    function did_action($tag) {
+        $hooks = app(HookManager::class);
+        return $hooks->didAction($tag);
+    }
+}
+
+if (!function_exists('has_action')) {
+    function has_action($tag, $function_to_check = false) {
+        $hooks = app(HookManager::class);
+        return $hooks->hasAction($tag, $function_to_check);
+    }
+}

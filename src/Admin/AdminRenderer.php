@@ -36,7 +36,7 @@ class AdminRenderer
             if (ob_get_level() > 0) {
                 ob_end_clean();
             }
-            return "Admin Rendering Error: " . $e->getMessage();
+            return "Admin Rendering Error: " .$e->getMessage().'<br/><pre>' . $e->getTraceAsString();
         }
     }
 

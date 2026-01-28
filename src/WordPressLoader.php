@@ -27,9 +27,32 @@ class WordPressLoader
             return true;
         }
 
+        // Always load helpers (Shims) explicitly to ensure compatibility
+        require_once __DIR__ . '/helpers.php';
+
         if (!file_exists($this->wpPath . '/wp-load.php')) {
-            // WordPress not installed or path incorrect
-            return false;
+            // Clean-room Mode: Simulate WordPress environment
+            $this->defineWordPressConstants();
+            
+            // Define WP_CONTENT_DIR/URL if not defined by constants
+            if (!defined('WP_CONTENT_DIR')) {
+                define('WP_CONTENT_DIR', $this->wpPath . '/wp-content');
+            }
+            if (!defined('WP_CONTENT_URL')) {
+                define('WP_CONTENT_URL', '/wp-content');
+            }
+
+            // Load Mu-Plugins
+            $muPluginsDir = WP_CONTENT_DIR . '/mu-plugins';
+            if (is_dir($muPluginsDir)) {
+                $files = glob($muPluginsDir . '/*.php');
+                foreach ($files as $file) {
+                    require_once $file;
+                }
+            }
+
+            $this->loaded = true;
+            return true;
         }
 
         $this->defineWordPressConstants();
@@ -43,6 +66,7 @@ class WordPressLoader
         $this->loaded = true;
         return true;
     }
+
 
     private function defineWordPressConstants(): void
     {
