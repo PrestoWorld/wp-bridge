@@ -7,6 +7,8 @@ namespace Prestoworld\Bridge\WordPress\Providers;
 use App\Support\ServiceProvider;
 use Prestoworld\Bridge\WordPress\WordPressLoader;
 use Prestoworld\Bridge\WordPress\WordPressBridge;
+use Prestoworld\Bridge\WordPress\Theme\ThemeLoader;
+use Prestoworld\Bridge\WordPress\Bootstrap\WordPressConceptBootstrap;
 
 class WordPressServiceProvider extends ServiceProvider
 {
@@ -30,11 +32,25 @@ class WordPressServiceProvider extends ServiceProvider
                 $app->make(WordPressLoader::class)
             );
         });
+
+        // Register WordPress Concept Bootstrapper
+        $this->app->addBootstrapper(WordPressConceptBootstrap::class);
+
+        // Register Theme Loader for Zero Migration
+        $this->singleton(ThemeLoader::class, function ($app) {
+            return new ThemeLoader(
+                $app,
+                $app->make(\PrestoWorld\Theme\ThemeManager::class)
+            );
+        });
     }
 
     public function boot(): void
     {
         $themeManager = $this->app->make(\PrestoWorld\Theme\ThemeManager::class);
+
+        // Register WordPress theme discovery path
+        $themeManager->addDiscoveryPath($this->app->basePath('public/wp-content/themes'));
 
         // Register WordPress-specific theme engines
         $themeManager->registerEngine(
@@ -46,5 +62,8 @@ class WordPressServiceProvider extends ServiceProvider
             \PrestoWorld\Theme\ThemeType::LEGACY->value,
             \Prestoworld\Bridge\WordPress\Theme\Engines\LegacyEngine::class
         );
+
+        // Run Zero Migration Theme Loader
+        $this->app->make(ThemeLoader::class)->load();
     }
 }
