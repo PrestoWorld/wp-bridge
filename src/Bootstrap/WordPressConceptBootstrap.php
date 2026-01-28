@@ -16,6 +16,12 @@ class WordPressConceptBootstrap
 {
     public function bootstrap(Application $app): void
     {
+        // Load WordPress simulation helpers FIRST
+        $helpersPath = __DIR__ . '/../helpers.php';
+        if (file_exists($helpersPath) && !function_exists('get_permalink')) {
+            require_once $helpersPath;
+        }
+
         // Bridge 'init' to application boot
         $app->booted(function() use ($app) {
             $this->doWpAction($app, 'init');

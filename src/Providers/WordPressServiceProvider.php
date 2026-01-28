@@ -43,6 +43,11 @@ class WordPressServiceProvider extends ServiceProvider
                 $app->make(\PrestoWorld\Theme\ThemeManager::class)
             );
         });
+
+        // Register WordPress Dispatcher for Native Router Fallback
+        $this->singleton(\Prestoworld\Bridge\WordPress\Routing\WordPressDispatcher::class, function ($app) {
+            return new \Prestoworld\Bridge\WordPress\Routing\WordPressDispatcher($app);
+        });
     }
 
     public function boot(): void
@@ -52,7 +57,7 @@ class WordPressServiceProvider extends ServiceProvider
         // Register WordPress theme discovery path
         $themeManager->addDiscoveryPath($this->app->basePath('public/wp-content/themes'));
 
-        // Register WordPress-specific theme engines
+        // Register WordPress-specific theme engines (Simulation Mode)
         $themeManager->registerEngine(
             \PrestoWorld\Theme\ThemeType::GUTENBERG->value,
             \Prestoworld\Bridge\WordPress\Theme\Engines\GutenbergEngine::class
@@ -62,8 +67,8 @@ class WordPressServiceProvider extends ServiceProvider
             \PrestoWorld\Theme\ThemeType::LEGACY->value,
             \Prestoworld\Bridge\WordPress\Theme\Engines\LegacyEngine::class
         );
-
-        // Run Zero Migration Theme Loader
-        $this->app->make(ThemeLoader::class)->load();
+        
+        // Note: WordPressLoader->load() is NOT called. 
+        // We are simulating WP behavior natively.
     }
 }
