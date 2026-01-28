@@ -1,0 +1,19 @@
+{
+  "name": "prestoworld/wp-bridge",
+  "description": "A seamless compatibility bridge for PrestoWorld that provides a lifeline for WordPress developers. It enables core WordPress features, theme loading, and plugin compatibility within the PrestoWorld ecosystem, allowing for a smooth transition from traditional WordPress to a high-performance modern architecture without losing familiar APIs",
+  "type": "library",
+  "license": "GPL-3.0-or-later",
+  "autoload": {
+    "psr-4": {
+      "Prestoworld\\Bridge\\WordPress\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Puleeno Nguyen",
+      "email": "puleeno@gmail.com"
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {}
+}
