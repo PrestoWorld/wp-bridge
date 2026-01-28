@@ -84,6 +84,57 @@ if (!function_exists('remove_all_actions')) {
 
 // --- WordPress Simulation Helpers ---
 
+use Prestoworld\Bridge\WordPress\Exceptions\WordPressCompatibilityException;
+
+if (!function_exists('is_admin')) {
+    function is_admin() {
+        return defined('WP_ADMIN') && WP_ADMIN;
+    }
+}
+
+// Settings API Stubs (Simulation)
+if (!function_exists('register_setting')) {
+    function register_setting($option_group, $option_name, $args = []) {
+        $registry = app(\Prestoworld\Bridge\WordPress\Settings\SettingsRegistry::class);
+        $registry->registerSetting($option_group, $option_name, $args);
+    }
+}
+
+if (!function_exists('add_settings_section')) {
+    function add_settings_section($id, $title, $callback, $page) {
+        $registry = app(\Prestoworld\Bridge\WordPress\Settings\SettingsRegistry::class);
+        $registry->addSection($id, $title, $callback, $page);
+    }
+}
+
+if (!function_exists('add_settings_field')) {
+    function add_settings_field($id, $title, $callback, $page, $section = 'default', $args = []) {
+        $registry = app(\Prestoworld\Bridge\WordPress\Settings\SettingsRegistry::class);
+        $registry->addField($id, $title, $callback, $page, $section, $args);
+    }
+}
+
+// STRICT MODE: Non-implemented critical functions
+if (!function_exists('wp_mail')) {
+    function wp_mail() {
+        if (env('WP_BRIDGE_STRICT', true)) {
+            throw WordPressCompatibilityException::notImplemented('wp_mail');
+        }
+        return false;
+    }
+}
+
+if (!function_exists('add_menu_page')) {
+    function add_menu_page($page_title, $menu_title, $capability, $menu_slug, $function = '', $icon_url = '', $position = null) {
+        // Implementation logic for custom admin menus goes here
+        // For now, if we are in strict mode and trying to do complex menu stuff:
+        if (empty($function) && env('WP_BRIDGE_STRICT', true)) {
+             throw WordPressCompatibilityException::notImplemented('add_menu_page with empty callback');
+        }
+        return "toplevel_page_{$menu_slug}";
+    }
+}
+
 if (!function_exists('is_404')) {
     function is_404() {
         return http_response_code() === 404;
@@ -136,10 +187,20 @@ if (!function_exists('the_post')) {
 
 if (!function_exists('the_title')) {
     function the_title($before = '', $after = '', $display = true) {
+        static $recursionCount = 0;
+        if ($recursionCount > 2) return '[Recursion Limit]';
+        $recursionCount++;
+
         $post = $GLOBALS['__presto_current_post'] ?? null;
-        if (!$post) return '';
+        if (!$post) {
+            $recursionCount--;
+            return '';
+        }
         
         $title = apply_filters('the_title', $post->title ?? '', $post->id ?? 0);
+        
+        $recursionCount--;
+        
         if ($display) {
             echo $before . $title . $after;
         } else {
@@ -150,10 +211,19 @@ if (!function_exists('the_title')) {
 
 if (!function_exists('the_content')) {
     function the_content($more_link_text = null, $strip_teaser = false) {
+        static $recursionCount = 0;
+        if ($recursionCount > 2) return;
+        $recursionCount++;
+
         $post = $GLOBALS['__presto_current_post'] ?? null;
-        if (!$post) return;
+        if (!$post) {
+            $recursionCount--;
+            return;
+        }
         
         $content = apply_filters('the_content', $post->content ?? '');
+        
+        $recursionCount--;
         echo $content;
     }
 }
@@ -176,6 +246,12 @@ if (!function_exists('is_single')) {
     }
 }
 
+if (!function_exists('get_queried_object')) {
+    function get_queried_object() {
+        return $GLOBALS['__presto_current_post'] ?? null;
+    }
+}
+
 if (!function_exists('get_the_ID')) {
     function get_the_ID() {
         $post = $GLOBALS['__presto_current_post'] ?? null;
@@ -185,17 +261,33 @@ if (!function_exists('get_the_ID')) {
 
 if (!function_exists('home_url')) {
     function home_url($path = '') {
-        $baseUrl = rtrim(env('APP_URL', 'http://prestoworld.localhost'), '/');
-        return $baseUrl . '/' . ltrim($path, '/');
+        $request = app(\Witals\Framework\Http\Request::class);
+        $host = $request->header('Host');
+        
+        if ($host) {
+            $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
+            $uri = $request->uri();
+            if (str_starts_with($uri, 'http')) {
+                $protocol = parse_url($uri, PHP_URL_SCHEME);
+            }
+            $baseUrl = "$protocol://$host";
+        } else {
+            $baseUrl = env('APP_URL', 'http://localhost');
+        }
+        
+        return rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
     }
 }
 
 if (!function_exists('get_permalink')) {
     function get_permalink($post_id = 0) {
         $post_obj = null;
-        if (!$post_id) {
-            global $post;
-            $post_obj = $post;
+        
+        // Optimization: If a Post object is passed, use it directly (prevents N+1)
+        if ($post_id instanceof \App\Models\Post) {
+            $post_obj = $post_id;
+        } elseif (!$post_id) {
+            $post_obj = $GLOBALS['__presto_current_post'] ?? null;
         } else {
             $orm = app(\Cycle\ORM\ORMInterface::class);
             $repo = $orm->getRepository(\App\Models\Post::class);

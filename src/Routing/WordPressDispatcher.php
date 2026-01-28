@@ -40,10 +40,17 @@ class WordPressDispatcher
 
         // 1. Handle Front Page / Home
         if (empty($path)) {
+            // error_log("WordPressDispatcher: Handling home page fallback...");
             // In WP simulation, we look for a page that might be set as front page
-            // For now, we fetch the latest page or a specific "home" slug
             $post = $repo->findOne(['status' => 'publish', 'type' => 'page', 'slug' => 'home']) 
                  ?? $repo->findOne(['status' => 'publish', 'type' => 'page']);
+            
+            if (!$post) {
+                // error_log("WordPressDispatcher: No home page found in database.");
+                // Return a special response or fallback? 
+                // For now, let's return the first available post if no page exists
+                $post = $repo->findOne(['status' => 'publish', 'type' => 'post']);
+            }
         } 
         
         // 2. Resolve by Slug (supports both Posts and Pages)
@@ -51,9 +58,13 @@ class WordPressDispatcher
             $segments = explode('/', rtrim($path, '/'));
             $slug = end($segments);
 
-            // Search for both types, prioritizing Page then Post if slug conflicts
-            $post = $repo->findOne(['slug' => $slug, 'type' => 'page', 'status' => 'publish'])
-                 ?? $repo->findOne(['slug' => $slug, 'type' => 'post', 'status' => 'publish']);
+            // Search for both types in a single query to avoid N+1/Sequential lookups
+            // Cycle ORM maps properties (slug, status, type) to columns (post_name, post_status, post_type)
+            $post = $repo->select()
+                ->where('slug', $slug)
+                ->where('status', 'publish')
+                ->where('type', 'in', ['page', 'post'])
+                ->fetchOne();
         }
 
         // 3. Handle Numeric ID Fallback (?p=123 for posts, ?page_id=123 for pages)
@@ -118,6 +129,13 @@ class WordPressDispatcher
         // Attempt to render the first available template in the hierarchy
         foreach ($templates as $template) {
             try {
+                // Set context for Debug Bar
+                if ($this->app->has('current_context')) {
+                    $this->app->instance('current_context', $template);
+                } else {
+                    $GLOBALS['__presto_current_context'] = $template;
+                }
+
                 $html = $themeManager->render($template, [
                     'post' => $postEntity,
                     'is_page' => ($postEntity->type === 'page'),

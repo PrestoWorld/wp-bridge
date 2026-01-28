@@ -24,6 +24,11 @@ class WordPressServiceProvider extends ServiceProvider
         $this->singleton(WordPressLoader::class, function ($app) {
             return new WordPressLoader($app);
         });
+
+        // Register Settings Registry
+        $this->singleton(\Prestoworld\Bridge\WordPress\Settings\SettingsRegistry::class, function ($app) {
+            return new \Prestoworld\Bridge\WordPress\Settings\SettingsRegistry();
+        });
         
         // Register WordPress Bridge
         $this->singleton(WordPressBridge::class, function ($app) {
@@ -35,6 +40,11 @@ class WordPressServiceProvider extends ServiceProvider
 
         // Register WordPress Concept Bootstrapper
         $this->app->addBootstrapper(WordPressConceptBootstrap::class);
+
+        // Register Admin Bootstrapper (Not auto-booted, called by Driver)
+        $this->singleton(\Prestoworld\Bridge\WordPress\Bootstrap\WordPressAdminBootstrap::class, function ($app) {
+            return new \Prestoworld\Bridge\WordPress\Bootstrap\WordPressAdminBootstrap();
+        });
 
         // Register Theme Loader for Zero Migration
         $this->singleton(ThemeLoader::class, function ($app) {
@@ -70,5 +80,13 @@ class WordPressServiceProvider extends ServiceProvider
         
         // Note: WordPressLoader->load() is NOT called. 
         // We are simulating WP behavior natively.
+
+        // Register WordPress Admin Driver if AdminManager is available
+        if ($this->app->has(\PrestoWorld\Admin\AdminManager::class)) {
+            $this->app->make(\PrestoWorld\Admin\AdminManager::class)->registerDriver(
+                'wordpress', 
+                \Prestoworld\Bridge\WordPress\Dashboard\WordPressDashboardDriver::class
+            );
+        }
     }
 }
