@@ -72,3 +72,24 @@ if (!function_exists('add_query_arg')) {
         return ($parts['path'] ?? '') . '?' . $query_str;
     }
 }
+
+if (!function_exists('is_user_logged_in')) {
+    function is_user_logged_in() {
+        if (!app()->has(\Witals\Framework\Contracts\Auth\AuthContextInterface::class)) {
+            return false;
+        }
+        $auth = app(\Witals\Framework\Contracts\Auth\AuthContextInterface::class);
+        return $auth->getToken() !== null;
+    }
+}
+
+if (!function_exists('auth_redirect')) {
+    function auth_redirect() {
+        if (!is_user_logged_in()) {
+            $login_url = '/wp-login.php?redirect_to=' . urlencode($_SERVER['REQUEST_URI'] ?? '/wp-admin/');
+            header('Location: ' . $login_url);
+            exit;
+        }
+    }
+}
+

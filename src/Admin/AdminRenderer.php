@@ -9,11 +9,14 @@ use Witals\Framework\Application;
 class AdminRenderer
 {
     protected Application $app;
+    protected \Witals\Framework\Contracts\Auth\AuthContextInterface $auth;
 
-    public function __construct(Application $app)
+    public function __construct(Application $app, \Witals\Framework\Contracts\Auth\AuthContextInterface $auth)
     {
         $this->app = $app;
+        $this->auth = $auth;
     }
+
 
     /**
      * Render a callback in a hybrid environment (WordPress + PrestoWorld)
@@ -43,14 +46,24 @@ class AdminRenderer
     protected function prepareWpGlobals(): void
     {
         global $wp, $wp_query, $wpdb, $current_user;
+        
+        $actor = $this->auth->getActor();
+
         // Mocking some basic WP globals if they don't exist
         if (!isset($current_user)) {
-             $current_user = (object)[
-                 'ID' => 1,
-                 'user_login' => 'admin',
-                 'display_name' => 'Administrator',
-                 'roles' => ['administrator']
-             ];
+             if ($actor) {
+                 $current_user = (object)[
+                     'ID' => $actor->id ?? 1,
+                     'user_login' => $actor->name ?? 'admin',
+                     'display_name' => $actor->name ?? 'Administrator',
+                     'roles' => $actor->roles ?? ['administrator']
+                 ];
+             } else {
+                 // For safety in admin area, we don't mock it as admin if not logged in
+                 // But some WP functions expect $current_user to be set.
+                 $current_user = null;
+             }
         }
     }
+
 }

@@ -9,18 +9,25 @@ use PrestoWorld\Admin\MenuRepository;
 use PrestoWorld\Admin\DashboardWidgetRepository;
 use Prestoworld\Bridge\WordPress\Admin\AdminRenderer;
 use PrestoWorld\Theme\ThemeManager;
+use Witals\Framework\Http\AbstractController;
 
-class DashboardController
+class DashboardController extends AbstractController
 {
+
     public function __construct(
         protected MenuRepository $menuRepo,
         protected DashboardWidgetRepository $widgetRepo,
         protected AdminRenderer $renderer,
-        protected ThemeManager $themeManager
+        protected ThemeManager $themeManager,
+        protected \Witals\Framework\Contracts\Auth\AuthContextInterface $auth
     ) {}
 
     public function index(): Response
     {
+        if ($this->auth->getToken() === null) {
+            return $this->redirect('/wp-login.php?redirect_to=' . urlencode('/wp-admin/'));
+        }
+
         $GLOBALS['__presto_admin_context'] = ['driver' => 'wordpress', 'screen' => 'dashboard'];
         
         $widgets = $this->widgetRepo->getWidgets();
@@ -37,11 +44,15 @@ class DashboardController
 
         $html = $this->renderAdminLayout('Dashboard', $this->renderDashboardGrid($widgetsOutput), $menus);
 
-        return Response::html($html);
+        return $this->html($html);
     }
 
     public function show(string $page, \Witals\Framework\Http\Request $request): Response
     {
+        if ($this->auth->getToken() === null) {
+            return $this->redirect('/wp-login.php?redirect_to=' . urlencode($request->uri()));
+        }
+
         $page = str_replace('.php', '', $page);
         $GLOBALS['__presto_admin_context'] = ['driver' => 'wordpress', 'screen' => $page];
         $menus = $this->menuRepo->getMenus();

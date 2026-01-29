@@ -154,19 +154,23 @@ class WordPressDispatcher
         return Response::html("<h1>{$postEntity->title}</h1><article>{$postEntity->content}</article>");
     }
 
-    /**
-     * Handle 404
-     */
     protected function handleNotFound(): Response
     {
         /** @var ThemeManager $themeManager */
         $themeManager = $this->app->make(ThemeManager::class);
 
         try {
+            // Ensure any leaked output from partial rendering is discarded
+            if (ob_get_level() > 0) ob_clean(); 
+            
             $html = $themeManager->render('404', ['title' => 'Content Not Found']);
             return Response::html($html, 404);
         } catch (\Throwable $e) {
+            // Ensure any leaked output from partial rendering is discarded
+            if (ob_get_level() > 0) ob_clean();
+            
             return Response::json(['error' => '404 - Not Found'], 404);
         }
     }
 }
+
