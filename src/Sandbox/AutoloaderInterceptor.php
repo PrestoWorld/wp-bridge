@@ -52,6 +52,26 @@ class AutoloaderInterceptor
     }
 
     /**
+     * Add an entire directory of plugins/themes to be transformable
+     */
+    public function addTransformableDirectory(string $basePath): void
+    {
+        if (!is_dir($basePath)) return;
+
+        foreach (scandir($basePath) as $dir) {
+            if ($dir === '.' || $dir === '..') continue;
+            
+            $fullPath = $basePath . '/' . $dir;
+            if (is_dir($fullPath)) {
+                $this->addTransformablePlugin($dir, $fullPath);
+            } elseif (is_file($fullPath) && str_ends_with($fullPath, '.php')) {
+                // For single file plugins (common in mu-plugins)
+                $this->addTransformablePlugin($dir, $basePath);
+            }
+        }
+    }
+
+    /**
      * Autoload handler
      */
     public function autoload(string $class): void

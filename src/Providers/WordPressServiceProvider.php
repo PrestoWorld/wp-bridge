@@ -163,36 +163,22 @@ class WordPressServiceProvider extends ServiceProvider
              );
         });
 
-        // 6. Autoloader Interceptor (On-the-fly transformation)
+        // 6. Autoloader Interceptor
         $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class, function ($app) {
             $storage = $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class)->storage ?? null;
-            
-            $interceptor = new \Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor(
+            return new \Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor(
                 $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class),
                 $storage
             );
-            
-            // Mark plugins that need transformation
-            $pluginsPath = $app->basePath('public/wp-content/plugins');
-            
-            if (is_dir($pluginsPath . '/woocommerce')) {
-                $interceptor->addTransformablePlugin('woocommerce', $pluginsPath . '/woocommerce');
-            }
-            
-            // Auto-detect other plugins from registry
-            $loader = $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerLoader::class);
-            $installedPlugins = $loader->discover();
-            
-            foreach ($installedPlugins as $config) {
-                if (isset($config['plugin']) && is_dir($pluginsPath . '/' . $config['plugin'])) {
-                    $interceptor->addTransformablePlugin(
-                        $config['plugin'],
-                        $pluginsPath . '/' . $config['plugin']
-                    );
-                }
-            }
-            
-            return $interceptor;
+        });
+
+        // 7. WordPress Module Loader
+        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\WordPressModuleLoader::class, function ($app) {
+            return new \Prestoworld\Bridge\WordPress\Sandbox\WordPressModuleLoader(
+                $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class),
+                $app->make(\Prestoworld\Bridge\WordPress\Sandbox\IsolationSandbox::class),
+                $app->make(\Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class)
+            );
         });
 
         // --- RESPONSE BRIDGE ---
@@ -231,9 +217,42 @@ class WordPressServiceProvider extends ServiceProvider
         // Note: WordPressLoader->load() is NOT called. 
         // We are simulating WP behavior natively.
 
-        // Activate Autoloader Interceptor for on-the-fly transformation
+        // Activate Autoloader Interceptor
         $interceptor = $this->app->make(\Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class);
         $interceptor->register();
+
+        // Load WordPress Ecosystem via Sandbox
+        $moduleLoader = $this->app->make(\Prestoworld\Bridge\WordPress\Sandbox\WordPressModuleLoader::class);
+        $wpContent = $this->app->basePath('public/wp-content');
+
+        // --- 1. NATIVE ECOSYSTEM (Secure Paths, No Sandbox) ---
+        
+        // Native Plugins
+        $nativePluginsPath = $this->app->basePath('plugins');
+        if (is_dir($nativePluginsPath)) {
+            $moduleLoader->loadPlugins($nativePluginsPath, $this->app->make('wp.options')->get('active_native_plugins', []));
+        }
+
+        // Native Theme
+        $nativeThemesPath = $this->app->basePath('themes');
+        $currentNativeTheme = $this->app->make('wp.options')->get('native_theme', 'tucnguyen');
+        if (is_dir($nativeThemesPath . '/' . $currentNativeTheme)) {
+            $moduleLoader->loadTheme($nativeThemesPath, $currentNativeTheme);
+        }
+
+
+        // --- 2. LEGACY ECOSYSTEM (wp-content, Sandboxed) ---
+
+        // MU-Plugins (Always)
+        $moduleLoader->loadMuPlugins($wpContent . '/mu-plugins');
+
+        // Active Plugins
+        $activePlugins = $this->app->make('wp.options')->get('active_plugins', []);
+        $moduleLoader->loadPlugins($wpContent . '/plugins', $activePlugins);
+
+        // Active Theme
+        $currentTheme = $this->app->make('wp.options')->get('template', 'twentytwentyfour');
+        $moduleLoader->loadTheme($wpContent . '/themes', $currentTheme);
 
         // Register WordPress Admin Driver if AdminManager is available
         if ($this->app->has(\PrestoWorld\Admin\AdminManager::class)) {
