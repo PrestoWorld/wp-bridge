@@ -71,6 +71,15 @@ class TransformerLoader
                 'keywords' => ['echo', 'print', 'wp_die'],
                 'enabled' => true
             ],
+            [
+                'id' => 'wp_options',
+                'class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\WpOptionsTransformer::class,
+                'keywords' => [
+                    'get_option', 'update_option', 'add_option', 'delete_option',
+                    'get_transient', 'set_transient', 'delete_transient'
+                ],
+                'enabled' => true
+            ],
         ];
     }
 

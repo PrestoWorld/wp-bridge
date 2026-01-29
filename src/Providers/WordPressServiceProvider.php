@@ -59,6 +59,11 @@ class WordPressServiceProvider extends ServiceProvider
             return new \Prestoworld\Bridge\WordPress\Routing\WordPressDispatcher($app);
         });
 
+        // --- OPTIONS ECOSYSTEM ---
+        $this->singleton('wp.options', function ($app) {
+            return new \Prestoworld\Bridge\WordPress\Options\OptionsManager();
+        });
+
         // --- SANDBOX ECOSYSTEM ---
 
         // 1. Transformer Registry Service (Database-backed)
@@ -132,6 +137,12 @@ class WordPressServiceProvider extends ServiceProvider
                 
                 $engine->indexTransformer($config['id'], $config['keywords']);
             }
+            
+            // Core options indexing
+            $engine->indexTransformer('wp_options', [
+                'get_option', 'update_option', 'add_option', 'delete_option',
+                'get_transient', 'set_transient', 'delete_transient'
+            ]);
             
             return $engine;
         });
