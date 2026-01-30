@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Prestoworld\Bridge\WordPress\Sandbox\Transformers;
 
-use Prestoworld\Bridge\WordPress\Sandbox\TransformerInterface;
+use Prestoworld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
 use Prestoworld\Bridge\WordPress\Sandbox\RequirementInterface;
 use Prestoworld\Bridge\WordPress\Sandbox\Requirements\PluginRequirement;
 

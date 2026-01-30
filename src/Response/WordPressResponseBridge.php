@@ -21,28 +21,27 @@ class WordPressResponseBridge
     /**
      * Execute WordPress code and return PrestoWorld Response
      */
-    public function execute(callable $wordpressCode): Response
+    public function execute(callable|object $handler): Response
     {
-        // Reset state (important for RoadRunner)
+        // 1. If it's a Native Component, call handle() directly
+        if ($handler instanceof \Prestoworld\Bridge\WordPress\Contracts\NativeComponentInterface) {
+            return $handler->handle('render');
+        }
+
+        // 2. If it's a Closure/Callable, use traditional interception
         $this->interceptor->reset();
-        
-        // Start intercepting
         $this->interceptor->start();
         
         try {
-            // Execute WordPress code
-            $result = $wordpressCode();
+            $result = is_callable($handler) ? $handler() : null;
             
-            // If WordPress code returns a Response, use it
             if ($result instanceof Response) {
+                $this->interceptor->reset(); // Don't need buffer if we have Response
                 return $result;
             }
             
-            // Otherwise, capture buffered output
             return $this->interceptor->end();
-            
         } catch (\Throwable $e) {
-            // Clean up on error
             $this->interceptor->reset();
             throw $e;
         }

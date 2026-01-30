@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Prestoworld\Bridge\WordPress\Sandbox\Services;
 
 use Cycle\ORM\EntityManagerInterface;
+use Cycle\ORM\ORMInterface;
 use Prestoworld\Bridge\WordPress\Sandbox\Models\TransformerRegistry;
 
 /**
@@ -16,6 +17,7 @@ use Prestoworld\Bridge\WordPress\Sandbox\Models\TransformerRegistry;
 class TransformerRegistryService
 {
     public function __construct(
+        protected ORMInterface $orm,
         protected EntityManagerInterface $entityManager
     ) {}
 
@@ -24,7 +26,7 @@ class TransformerRegistryService
      */
     public function getForPlugin(string $slug, string $version): array
     {
-        $repo = $this->entityManager->getRepository(TransformerRegistry::class);
+        $repo = $this->orm->getRepository(TransformerRegistry::class);
         
         // Query all transformers for this plugin
         $results = $repo->select()
@@ -84,7 +86,7 @@ class TransformerRegistryService
      */
     protected function upsertTransformer(array $data): void
     {
-        $repo = $this->entityManager->getRepository(TransformerRegistry::class);
+        $repo = $this->orm->getRepository(TransformerRegistry::class);
         
         // Find existing
         $existing = $repo->select()

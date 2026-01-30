@@ -4,20 +4,15 @@ declare(strict_types=1);
 
 namespace Prestoworld\Bridge\WordPress\Options;
 
-use Illuminate\Support\Facades\Cache;
-
 /**
  * Class OptionsManager
  * 
  * High-performance option management for PrestoWorld Super CMS.
- * Features:
- * - Redis-first storage for 'alloptions' (autoload)
- * - Intelligent caching for individual options
- * - Zero SQL for alloptions lookup
  */
 class OptionsManager
 {
     protected array $allOptions = [];
+    protected array $runtimeCache = [];
     protected bool $loaded = false;
     protected string $cacheKey = 'wp_alloptions';
 
@@ -32,11 +27,18 @@ class OptionsManager
             return $this->maybeUnserialize($this->allOptions[$option]);
         }
 
-        // Individual lookup for non-autoload options
-        return Cache::remember("wp_opt_{$option}", 3600, function () use ($option, $default) {
-            // Fallback to DB proxy if not in cache
-            return $this->fetchFromDb($option) ?: $default;
-        });
+        if (isset($this->runtimeCache[$option])) {
+            return $this->runtimeCache[$option];
+        }
+
+        // Fetch from DB if not in autoloaded or runtime cache
+        $value = $this->fetchFromDb($option);
+        if ($value !== false) {
+            $this->runtimeCache[$option] = $value;
+            return $value;
+        }
+
+        return $default;
     }
 
     /**
@@ -47,15 +49,73 @@ class OptionsManager
         $this->ensureLoaded();
         
         $serializedValue = is_array($value) || is_object($value) ? serialize($value) : $value;
-        $this->allOptions[$option] = $serializedValue;
+        
+        // Update local state
+        if ($autoload === true || (!isset($this->allOptions[$option]) && $autoload === null)) {
+            $this->allOptions[$option] = $serializedValue;
+        } else {
+            $this->runtimeCache[$option] = $value;
+        }
 
-        // Update Cache/Redis
-        Cache::forever($this->cacheKey, $this->allOptions);
-        Cache::put("wp_opt_{$option}", $value, 3600);
-
-        // Async: Persist to DB in background (using dispatcher if available)
-        // For now, write sync
+        // Persist to DB
         return $this->persistToDb($option, $serializedValue, $autoload);
+    }
+
+    /**
+     * Delete an option
+     */
+    public function delete(string $option): bool
+    {
+        $this->ensureLoaded();
+        
+        unset($this->allOptions[$option]);
+        unset($this->runtimeCache[$option]);
+
+        $db = app('wpdb');
+        return (bool)$db->delete('wp_options', ['option_name' => $option]);
+    }
+
+    // --- WordPress Compatibility Aliases ---
+    
+    public function get_option(string $option, mixed $default = false): mixed { return $this->get($option, $default); }
+    public function update_option(string $option, mixed $value, bool $autoload = null): bool { return $this->update($option, $value, $autoload); }
+    public function add_option(string $option, mixed $value, string $deprecated = '', bool $autoload = true): bool { return $this->update($option, $value, $autoload); }
+    public function delete_option(string $option): bool { return $this->delete($option); }
+    
+    public function get_site_option(string $option, mixed $default = false): mixed { return $this->get($option, $default); }
+    public function update_site_option(string $option, mixed $value): bool { return $this->update($option, $value); }
+
+    // --- Transient Support ---
+
+    public function get_transient(string $transient): mixed
+    {
+        $value = $this->get("_wp_t_{$transient}");
+        if ($value === false) return false;
+
+        // Check expiration
+        $expiration = $this->get("_wp_t_timeout_{$transient}");
+        if ($expiration !== false && time() > (int)$expiration) {
+            $this->delete_transient($transient);
+            return false;
+        }
+
+        return $value;
+    }
+
+    public function set_transient(string $transient, mixed $value, int $expiration = 0): bool
+    {
+        $result = $this->update("_wp_t_{$transient}", $value, false);
+        if ($expiration > 0) {
+            $this->update("_wp_t_timeout_{$transient}", time() + $expiration, false);
+        }
+        return $result;
+    }
+
+    public function delete_transient(string $transient): bool
+    {
+        $this->delete("_wp_t_{$transient}");
+        $this->delete("_wp_t_timeout_{$transient}");
+        return true;
     }
 
     /**
@@ -64,18 +124,12 @@ class OptionsManager
     protected function ensureLoaded(): void
     {
         if ($this->loaded) return;
-
-        $this->allOptions = Cache::get($this->cacheKey, function() {
-            return $this->warmupAllOptions();
-        });
-
+        $this->allOptions = $this->warmupAllOptions();
         $this->loaded = true;
     }
 
     protected function warmupAllOptions(): array
     {
-        // One-time query to fetch all autoload options
-        // SELECT option_name, option_value FROM wp_options WHERE autoload = 'yes'
         $db = app('wpdb');
         $results = $db->get_results("SELECT option_name, option_value FROM wp_options WHERE autoload = 'yes' OR autoload = 'on'");
         
@@ -83,6 +137,12 @@ class OptionsManager
         foreach ($results as $row) {
             $options[$row->option_name] = $row->option_value;
         }
+
+        // Demo Seeds (Commented out to use database values)
+        // $options['active_plugins'] = serialize(['legacy-demo/legacy-demo.php']);
+        // $options['active_native_plugins'] = serialize(['presto-native-demo']);
+        // $options['template'] = 'twentytwenty';
+        // $options['native_theme'] = 'tucnguyen';
 
         return $options;
     }

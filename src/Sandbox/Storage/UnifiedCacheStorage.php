@@ -100,6 +100,7 @@ class UnifiedCacheStorage implements CompiledStorageInterface
     // SQLite Implementation
     protected function hasInSQLite(string $key): bool
     {
+        $this->initSQLiteTable();
         $stmt = $this->connection->prepare("SELECT COUNT(*) FROM compiled_cache WHERE cache_key = ?");
         $stmt->execute([$key]);
         return $stmt->fetchColumn() > 0;
@@ -107,15 +108,15 @@ class UnifiedCacheStorage implements CompiledStorageInterface
 
     protected function getFromSQLite(string $key): ?string
     {
+        $this->initSQLiteTable();
         $stmt = $this->connection->prepare("SELECT code FROM compiled_cache WHERE cache_key = ?");
         $stmt->execute([$key]);
         $result = $stmt->fetchColumn();
         return $result ?: null;
     }
 
-    protected function putToSQLite(string $key, string $code): void
+    protected function initSQLiteTable(): void
     {
-        // Ensure table exists
         $this->connection->exec("
             CREATE TABLE IF NOT EXISTS compiled_cache (
                 cache_key TEXT PRIMARY KEY,
@@ -123,6 +124,11 @@ class UnifiedCacheStorage implements CompiledStorageInterface
                 created_at INTEGER DEFAULT (strftime('%s', 'now'))
             )
         ");
+    }
+
+    protected function putToSQLite(string $key, string $code): void
+    {
+        $this->initSQLiteTable();
         
         $stmt = $this->connection->prepare("INSERT OR REPLACE INTO compiled_cache (cache_key, code) VALUES (?, ?)");
         $stmt->execute([$key, $code]);

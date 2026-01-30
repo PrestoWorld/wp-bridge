@@ -5,6 +5,17 @@ use PrestoWorld\Contracts\Hooks\HookStateType;
 
 if (!function_exists('add_filter')) {
     function add_filter($hook_name, $callback, $priority = 10, $accepted_args = 1, HookStateType $stateType = HookStateType::SCOPED) {
+        if (!empty($GLOBALS['__presto_sandbox_capture'])) {
+            $GLOBALS['__presto_captured_hooks'][] = [
+                'type' => 'filter',
+                'tag' => $hook_name,
+                'callback' => $callback,
+                'priority' => $priority,
+                'accepted_args' => $accepted_args
+            ];
+            return true;
+        }
+
         $hooks = app(HookManager::class);
         $hooks->addFilter($hook_name, $callback, $priority, $stateType);
         return true;
@@ -13,6 +24,17 @@ if (!function_exists('add_filter')) {
 
 if (!function_exists('add_action')) {
     function add_action($hook_name, $callback, $priority = 10, $accepted_args = 1, HookStateType $stateType = HookStateType::SCOPED) {
+        if (!empty($GLOBALS['__presto_sandbox_capture'])) {
+            $GLOBALS['__presto_captured_hooks'][] = [
+                'type' => 'action',
+                'tag' => $hook_name,
+                'callback' => $callback,
+                'priority' => $priority,
+                'accepted_args' => $accepted_args
+            ];
+            return true;
+        }
+
         $hooks = app(HookManager::class);
         $hooks->addAction($hook_name, $callback, $priority, $stateType);
         return true;

@@ -57,6 +57,12 @@ class ResponseInterceptor
         $content = ob_get_clean();
         $this->isBuffering = false;
 
+        // Allow post-processing of HTML via Presto Hook system
+        if (app()->has(\PrestoWorld\Hooks\HookManager::class)) {
+            $content = app()->make(\PrestoWorld\Hooks\HookManager::class)
+                ->applyFilters('presto.response_body', $content);
+        }
+
         // Handle redirect
         if ($this->redirectUrl) {
             return Response::redirect($this->redirectUrl, $this->statusCode);

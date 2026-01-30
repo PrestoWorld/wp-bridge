@@ -28,23 +28,23 @@ class WpOptionsTransformer implements TransformerInterface
             $source
         );
 
-        // 2. Rewrite transients (move to high-performance Cache service directly)
-        // Transform: get_transient('my_trans') -> app('cache')->get('_wp_transient_my_trans')
+        // 2. Rewrite transients (now supported by OptionsManager)
+        // Transform: get_transient('my_trans') -> app('wp.options')->get_transient('my_trans')
         $source = preg_replace(
-            '/\bget_transient\s*\((.+)\)/U',
-            'app(\'cache\')->get(\'_wp_t_\' . $1)',
+            '/\bget_transient\s*\(/',
+            'app(\'wp.options\')->get_transient(',
             $source
         );
 
         $source = preg_replace(
-            '/\bset_transient\s*\((.+),\s*(.+),\s*(.+)\)/U',
-            'app(\'cache\')->put(\'_wp_t_\' . $1, $2, $3)',
+            '/\bset_transient\s*\(/',
+            'app(\'wp.options\')->set_transient(',
             $source
         );
 
         $source = preg_replace(
-            '/\bdelete_transient\s*\((.+)\)/U',
-            'app(\'cache\')->forget(\'_wp_t_\' . $1)',
+            '/\bdelete_transient\s*\(/',
+            'app(\'wp.options\')->delete_transient(',
             $source
         );
 
