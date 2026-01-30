@@ -91,3 +91,38 @@ if (!function_exists('get_the_author_meta')) {
         return 'Admin'; // Mock
     }
 }
+
+if (!function_exists('get_template_directory')) {
+    function get_template_directory() {
+        $theme = app(\PrestoWorld\Theme\ThemeManager::class)->getActiveTheme();
+        return $theme ? $theme->getPath() : '';
+    }
+}
+
+if (!function_exists('get_stylesheet_directory')) {
+    function get_stylesheet_directory() {
+        return get_template_directory();
+    }
+}
+
+if (!function_exists('get_template_directory_uri')) {
+    function get_template_directory_uri() {
+        $theme = app(\PrestoWorld\Theme\ThemeManager::class)->getActiveTheme();
+        if (!$theme) return '';
+        
+        $path = $theme->getPath();
+        $publicPath = app()->basePath('public');
+        
+        if (str_starts_with($path, $publicPath)) {
+            return str_replace($publicPath, '', $path);
+        }
+        
+        return '/wp-content/themes/' . $theme->getName();
+    }
+}
+
+if (!function_exists('get_stylesheet_directory_uri')) {
+    function get_stylesheet_directory_uri() {
+        return get_template_directory_uri();
+    }
+}

@@ -32,7 +32,10 @@ class WpDbProxy
     {
         $this->app = $app;
         $this->rewriter = new QueryRewriter();
-        // In reality, this would initialize connection to the optimized DB
+        // Use the default DatabaseInterface from Cycle
+        if ($this->app->has(\Cycle\Database\DatabaseInterface::class)) {
+            $this->realConnection = $this->app->make(\Cycle\Database\DatabaseInterface::class);
+        }
     }
 
     /**
@@ -44,50 +47,132 @@ class WpDbProxy
         [$newQuery, $bindings] = $this->rewriter->rewrite($query);
 
         if ($newQuery !== $query) {
-            // Log that we optimized a legacy query
             error_log("[PrestoBridge] Optimized Query: $query -> $newQuery");
-            
-            // Execute on Optimized Native Table (e.g. wp_products)
             return $this->dispatchToNative($newQuery, $bindings);
         }
 
-        // 2. Fallback: Execute generic WP query
-        // This might go to the real legacy DB or the Sandbox SQLite
         return $this->dispatchToLegacy($query);
+    }
+
+    /**
+     * Alias for query() to support safety-first transformations.
+     */
+    public function safe_query($query)
+    {
+        return $this->query($query);
+    }
+
+    public function insert($table, $data, $format = null)
+    {
+        if (!$this->realConnection) return false;
+        
+        try {
+            return $this->realConnection->insert($table)
+                ->values($data)
+                ->run();
+        } catch (\Throwable $e) {
+            error_log("[PrestoBridge] Insert Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function update($table, $data, $where, $format = null, $where_format = null)
+    {
+        if (!$this->realConnection) return false;
+
+        try {
+            $query = $this->realConnection->update($table)->values($data);
+            foreach ($where as $column => $value) {
+                $query->where($column, $value);
+            }
+            return $query->run();
+        } catch (\Throwable $e) {
+            error_log("[PrestoBridge] Update Error: " . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function delete($table, $where, $where_format = null)
+    {
+        if (!$this->realConnection) return false;
+
+        try {
+            $query = $this->realConnection->delete($table);
+            foreach ($where as $column => $value) {
+                $query->where($column, $value);
+            }
+            return $query->run();
+        } catch (\Throwable $e) {
+            error_log("[PrestoBridge] Delete Error: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function get_results($query = null, $output = 'OBJECT')
     {
-        return $this->query($query);
+        if (!$this->realConnection) return [];
+
+        try {
+            $results = $this->realConnection->query($query)->fetchAll(\PDO::FETCH_ASSOC);
+            if ($output === 'OBJECT') {
+                return array_map(fn($row) => (object)$row, $results);
+            }
+            return $results;
+        } catch (\Throwable $e) {
+            error_log("[PrestoBridge] get_results Error: " . $e->getMessage());
+            return [];
+        }
     }
     
     public function get_var($query = null, $x = 0, $y = 0)
     {
-        $results = $this->query($query);
-        // ... extraction logic
-        return $results[0] ?? null;
-    }
+        if (!$this->realConnection) return null;
 
-    // ... Implement other wpdb methods: prepare, insert, update, get_row ...
+        try {
+            return $this->realConnection->query($query)->fetchColumn($x);
+        } catch (\Throwable $e) {
+            error_log("[PrestoBridge] get_var Error: " . $e->getMessage());
+            return null;
+        }
+    }
 
     public function prepare($query, ...$args)
     {
-        // Simple vsprintf style generic implementation
-        // Real WP prepare is more complex with %s %d placeholders
-        $query = str_replace("'%s'", "'%s'", $query); // Hacky fix for quotes
-        return vsprintf($query, $args);
+        if (isset($args[0]) && is_array($args[0])) {
+            $args = $args[0];
+        }
+        
+        // This is a simplified version of WP's prepare.
+        // It handles %s (string), %d (integer), %f (float)
+        $processedArgs = [];
+        foreach ($args as $arg) {
+            if (is_int($arg)) {
+                $processedArgs[] = $arg;
+            } elseif (is_float($arg)) {
+                $processedArgs[] = $arg;
+            } else {
+                // String: Escape and wrap in quotes
+                // In a real app we'd use $this->realConnection->quote() or similar
+                $escaped = addslashes((string)$arg);
+                $processedArgs[] = "'$escaped'";
+            }
+        }
+
+        // Replace placeholders safely
+        // Note: This simple replacement assumes placeholders are not part of actual text.
+        $query = str_replace(['%s', '%d', '%f'], '%s', $query);
+        return vsprintf($query, $processedArgs);
     }
 
     protected function dispatchToNative($sql, $bindings)
     {
-        // Use Cycle ORM or direct PDO here
-        // For simulation:
-        return [];
+        if (!$this->realConnection) return [];
+        return $this->realConnection->query($sql, $bindings)->fetchAll();
     }
 
     protected function dispatchToLegacy($sql)
     {
-        // Execute on standard WP database
-        return [];
+        if (!$this->realConnection) return [];
+        return $this->realConnection->query($sql)->fetchAll();
     }
 }

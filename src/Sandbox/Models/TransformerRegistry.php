@@ -6,7 +6,6 @@ namespace Prestoworld\Bridge\WordPress\Sandbox\Models;
 
 use Cycle\Annotated\Annotation\Column;
 use Cycle\Annotated\Annotation\Entity;
-use Cycle\Annotated\Annotation\Table;
 
 /**
  * TransformerRegistry Model
@@ -14,8 +13,7 @@ use Cycle\Annotated\Annotation\Table;
  * Stores transformer metadata for WordPress plugins.
  * Can be synced from wporg-marketplace API.
  */
-#[Entity]
-#[Table(table: 'transformer_registry')]
+#[Entity(table: 'transformer_registry')]
 class TransformerRegistry
 {
     #[Column(type: 'primary')]

@@ -29,6 +29,11 @@ class TransformerEngine
         $this->storage = $storage;
     }
 
+    public function getStorage(): ?Storage\CompiledStorageInterface
+    {
+        return $this->storage;
+    }
+
     /**
      * Smart Compile: Analyzes source code first, then fetches ONLY relevant transformers.
      */
@@ -67,9 +72,11 @@ class TransformerEngine
         }
 
         // 2. Load Only Relevant Transformers
-        // If 1 million transformers exist, but only 5 define logic for 'wpdb', we only load 5.
         if (empty($relevantTransformerIds)) {
-            return $source; // No changes needed
+            if ($fileKey && $this->storage) {
+                $this->storage->put($fileKey, $source);
+            }
+            return $source;
         }
 
         $transformers = [];

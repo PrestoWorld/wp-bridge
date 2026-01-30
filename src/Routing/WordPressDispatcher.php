@@ -30,9 +30,11 @@ class WordPressDispatcher
      */
     public function dispatch(Request $request): Response
     {
-        $this->prepareEnvironment($request);
-
         $path = ltrim($request->path(), '/');
+        error_log("WordPressDispatcher: Dispatching path '{$path}'");
+        
+        $this->prepareEnvironment($request);
+        
         $orm = $this->app->make(ORMInterface::class);
         $repo = $orm->getRepository(Post::class);
 
@@ -65,6 +67,12 @@ class WordPressDispatcher
                 ->where('status', 'publish')
                 ->where('type', 'in', ['page', 'post'])
                 ->fetchOne();
+        }
+        
+        if ($post) {
+            error_log("WordPressDispatcher: Resolved to post ID {$post->id} (type: {$post->type}, slug: {$post->slug})");
+        } else {
+            error_log("WordPressDispatcher: No post resolved for '{$path}'");
         }
 
         // 3. Handle Numeric ID Fallback (?p=123 for posts, ?page_id=123 for pages)
@@ -134,6 +142,20 @@ class WordPressDispatcher
                     $this->app->instance('current_context', $template);
                 } else {
                     $GLOBALS['__presto_current_context'] = $template;
+                }
+
+                $html = '';
+                $nativeTheme = $this->app->has('wp.native_theme') ? $this->app->make('wp.native_theme') : null;
+                
+                if ($nativeTheme instanceof \Prestoworld\Bridge\WordPress\Contracts\NativeComponentInterface) {
+                    // Force the action to match the specific template hierarchy context
+                    $response = $nativeTheme->handle($template, [
+                        'post' => $postEntity,
+                        'is_page' => ($postEntity->type === 'page'),
+                        'is_single' => ($postEntity->type === 'post'),
+                        'id' => $postEntity->id
+                    ]);
+                    return $response;
                 }
 
                 $html = $themeManager->render($template, [

@@ -54,6 +54,12 @@ class TransformerLoader
     {
         return [
             [
+                'id' => 'global_variable',
+                'class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\GlobalVariableTransformer::class,
+                'keywords' => ['$GLOBALS'],
+                'enabled' => true
+            ],
+            [
                 'id' => 'global_to_container',
                 'class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\GlobalToContainerTransformer::class,
                 'keywords' => ['global'],

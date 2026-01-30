@@ -62,15 +62,15 @@ class IsolationSandbox implements SandboxInterface
         
         foreach ($hooks as $hook) {
             // Translate WP Hook -> Presto Hook
-            // Example: 'admin_menu' -> Presto Admin Menu Builder
-            
             if ($hook['tag'] === 'admin_menu') {
-                // Execute the callback immediately to build the menu
-                // But pass a Presto Menu Builder proxy if needed
                 call_user_func($hook['callback']); 
+                continue;
+            }
+
+            if ($hook['type'] === 'filter') {
+                $this->prestoHooks->addFilter($hook['tag'], $hook['callback'], $hook['priority']);
             } else {
-                // Register as standard Presto Event
-                $this->prestoHooks->addAction($hook['tag'], $hook['callback'], $hook['priority'], $hook['accepted_args']);
+                $this->prestoHooks->addAction($hook['tag'], $hook['callback'], $hook['priority']);
             }
         }
         

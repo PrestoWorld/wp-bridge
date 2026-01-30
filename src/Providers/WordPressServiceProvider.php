@@ -64,11 +64,18 @@ class WordPressServiceProvider extends ServiceProvider
             return new \Prestoworld\Bridge\WordPress\Options\OptionsManager();
         });
 
+        // --- GLOBAL STATE ECOSYSTEM ---
+        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\GlobalManager::class, function ($app) {
+            return new \Prestoworld\Bridge\WordPress\Sandbox\GlobalManager();
+        });
+        $this->app->alias(\Prestoworld\Bridge\WordPress\Sandbox\GlobalManager::class, 'global');
+
         // --- SANDBOX ECOSYSTEM ---
 
         // 1. Transformer Registry Service (Database-backed)
         $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService::class, function ($app) {
             return new \Prestoworld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService(
+                $app->make(\Cycle\ORM\ORMInterface::class),
                 $app->make(\Cycle\ORM\EntityManagerInterface::class)
             );
         });
@@ -165,7 +172,8 @@ class WordPressServiceProvider extends ServiceProvider
 
         // 6. Autoloader Interceptor
         $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class, function ($app) {
-            $storage = $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class)->storage ?? null;
+            $engine = $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class);
+            $storage = $engine->getStorage();
             return new \Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor(
                 $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class),
                 $storage
@@ -194,6 +202,19 @@ class WordPressServiceProvider extends ServiceProvider
                 $app->make(\Prestoworld\Bridge\WordPress\Response\ResponseInterceptor::class)
             );
         });
+
+        // --- THEME ECOSYSTEM ---
+        if ($this->app->has(\PrestoWorld\Theme\ThemeManager::class)) {
+            $themeManager = $this->app->make(\PrestoWorld\Theme\ThemeManager::class);
+            $themeManager->registerEngine(
+                \PrestoWorld\Theme\ThemeType::GUTENBERG->value,
+                \Prestoworld\Bridge\WordPress\Theme\Engines\GutenbergEngine::class
+            );
+            $themeManager->registerEngine(
+                \PrestoWorld\Theme\ThemeType::LEGACY->value,
+                \Prestoworld\Bridge\WordPress\Theme\Engines\LegacyEngine::class
+            );
+        }
     }
 
     public function boot(): void
@@ -202,17 +223,6 @@ class WordPressServiceProvider extends ServiceProvider
 
         // Register WordPress theme discovery path
         $themeManager->addDiscoveryPath($this->app->basePath('public/wp-content/themes'));
-
-        // Register WordPress-specific theme engines (Simulation Mode)
-        $themeManager->registerEngine(
-            \PrestoWorld\Theme\ThemeType::GUTENBERG->value,
-            \Prestoworld\Bridge\WordPress\Theme\Engines\GutenbergEngine::class
-        );
-
-        $themeManager->registerEngine(
-            \PrestoWorld\Theme\ThemeType::LEGACY->value,
-            \Prestoworld\Bridge\WordPress\Theme\Engines\LegacyEngine::class
-        );
         
         // Note: WordPressLoader->load() is NOT called. 
         // We are simulating WP behavior natively.
@@ -250,9 +260,25 @@ class WordPressServiceProvider extends ServiceProvider
         $activePlugins = $this->app->make('wp.options')->get('active_plugins', []);
         $moduleLoader->loadPlugins($wpContent . '/plugins', $activePlugins);
 
-        // Active Theme
-        $currentTheme = $this->app->make('wp.options')->get('template', 'twentytwentyfour');
-        $moduleLoader->loadTheme($wpContent . '/themes', $currentTheme);
+        // Active Theme (Legacy functions.php loading)
+        $activeTheme = $themeManager->getActiveTheme();
+        $forcedTheme = env('THEME_ACTIVE') ?: env('ACTIVE_THEME');
+        
+        error_log("WP Boot Theme Check: Active=" . ($activeTheme ? $activeTheme->getName() : 'none') . " Forced='{$forcedTheme}'");
+
+        if ($activeTheme && $activeTheme->getType() === \PrestoWorld\Theme\ThemeType::LEGACY->value) {
+            error_log("Loading Legacy Active Theme: " . $activeTheme->getName());
+            $moduleLoader->loadTheme(dirname($activeTheme->getPath()), $activeTheme->getName());
+        } elseif ($forcedTheme && $forcedTheme !== 'default') {
+             error_log("Skipping Legacy Loading because native theme forced: {$forcedTheme}");
+        } elseif ($activeTheme && $activeTheme->getType() === \PrestoWorld\Theme\ThemeType::NATIVE->value) {
+             error_log("Skipping Legacy Loading because native theme is active: " . $activeTheme->getName());
+        } else {
+            // Fallback: If no theme forced and nothing active yet, use DB
+            $currentTheme = $this->app->make('wp.options')->get('template', 'twentytwentyfour');
+            error_log("Fallback to DB Theme: " . $currentTheme);
+            $moduleLoader->loadTheme($wpContent . '/themes', $currentTheme);
+        }
 
         // Register WordPress Admin Driver if AdminManager is available
         if ($this->app->has(\PrestoWorld\Admin\AdminManager::class)) {

@@ -93,3 +93,9 @@ if (!function_exists('auth_redirect')) {
     }
 }
 
+// WordPress standard globals
+$GLOBALS['wp_version'] = '6.4.1';
+$GLOBALS['wp_db_version'] = 56657;
+$GLOBALS['tinymce_version'] = '49110-20200713';
+$GLOBALS['wp_local_package'] = 'en_US';
+

@@ -38,7 +38,19 @@ class WordPressModuleLoader
         if (!is_dir($path)) return;
 
         foreach ($activePlugins as $plugin) {
+            $pluginPath = $path . '/' . dirname($plugin);
             $mainFile = $path . '/' . $plugin;
+
+            // Check if it's a native structured plugin (e.g. plugin-slug/bootstrap.php)
+            $bootstrapFile = $path . '/' . $plugin . '/bootstrap.php';
+            if ($this->isNativePath($path) && file_exists($bootstrapFile)) {
+                $component = require_once $bootstrapFile;
+                if ($component instanceof \Prestoworld\Bridge\WordPress\Contracts\NativeComponentInterface) {
+                    $component->boot();
+                }
+                continue;
+            }
+            
             if (file_exists($mainFile)) {
                 $this->loadAnyFile($mainFile, dirname($mainFile), dirname($plugin));
             }
@@ -50,8 +62,31 @@ class WordPressModuleLoader
      */
     public function loadTheme(string $path, string $themeSlug): void
     {
+        error_log("ModuleLoader: Attempting to load theme '{$themeSlug}' from '{$path}'");
         $themePath = $path . '/' . $themeSlug;
         if (!is_dir($themePath)) return;
+
+        // Structured Native Theme
+        $themeClassFile = $themePath . '/Theme.php';
+        if ($this->isNativePath($themePath) && file_exists($themeClassFile)) {
+            require_once $themeClassFile;
+            $class = "Themes\\" . str_replace(' ', '', ucwords(str_replace(['-', '_'], ' ', $themeSlug))) . "\\Theme";
+            error_log("ModuleLoader: Construced native theme class: {$class}");
+            if (class_exists($class)) {
+                $theme = new $class();
+                error_log("ModuleLoader: Successfully instantiated native theme class: {$class}");
+                if ($theme instanceof \Prestoworld\Bridge\WordPress\Contracts\NativeComponentInterface) {
+                    $theme->boot();
+                    // Store in container for later usage in ResponseBridge
+                    app()->instance('wp.native_theme', $theme);
+                } else {
+                    error_log("ModuleLoader: Class {$class} does NOT implement NativeComponentInterface");
+                }
+                return;
+            } else {
+                error_log("ModuleLoader: Class {$class} NOT found after loading {$themeClassFile}");
+            }
+        }
 
         $functionsFile = $themePath . '/functions.php';
         if (file_exists($functionsFile)) {
@@ -100,10 +135,16 @@ class WordPressModuleLoader
             $transformed = $this->engine->compile($source, $cacheKey);
             
             // Execute the compiled file
-            $compiledPath = $this->engine->storage->getPath($cacheKey);
-            
-            // Ensure global scope for plugin/theme definitions
-            require_once $compiledPath;
+            $storage = $this->engine->getStorage();
+            if ($storage) {
+                $compiledPath = $storage->getPath($cacheKey);
+                require_once $compiledPath;
+            } else {
+                eval('?>' . $transformed);
+            }
         });
+
+        // Promote captured hooks to PrestoWorld
+        $this->sandbox->resolve();
     }
 }
