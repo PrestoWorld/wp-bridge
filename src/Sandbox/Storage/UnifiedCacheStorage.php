@@ -21,10 +21,17 @@ class UnifiedCacheStorage implements CompiledStorageInterface
         $this->driver = $driver;
         $this->connection = $connection;
         
-        // Use /dev/shm for fastest execution if available
-        $this->localTempDir = is_dir('/dev/shm') 
-            ? '/dev/shm/presto_compiled' 
-            : sys_get_temp_dir() . '/presto_compiled';
+        // Use storage_path if available to avoid conflicts in shared environments
+        if (function_exists('storage_path')) {
+            $this->localTempDir = storage_path('framework/presto_compiled');
+        } elseif (function_exists('base_path')) {
+             $this->localTempDir = base_path('storage/framework/presto_compiled');
+        } else {
+            // Use /dev/shm for fastest execution if available
+            $this->localTempDir = is_dir('/dev/shm') 
+                ? '/dev/shm/presto_compiled' 
+                : sys_get_temp_dir() . '/presto_compiled';
+        }
         
         if (!is_dir($this->localTempDir)) {
             mkdir($this->localTempDir, 0755, true);
