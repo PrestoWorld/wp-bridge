@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Sandbox\Transformers;
+namespace PrestoWorld\Bridge\WordPress\Sandbox\Transformers;
 
 /**
  * Class WpOptionsTransformer

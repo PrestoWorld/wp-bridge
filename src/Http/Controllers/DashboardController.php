@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Http\Controllers;
+namespace PrestoWorld\Bridge\WordPress\Http\Controllers;
 
 use Witals\Framework\Http\Response;
 use PrestoWorld\Admin\MenuRepository;
 use PrestoWorld\Admin\DashboardWidgetRepository;
-use Prestoworld\Bridge\WordPress\Admin\AdminRenderer;
+use PrestoWorld\Bridge\WordPress\Admin\AdminRenderer;
 use PrestoWorld\Theme\ThemeManager;
 use Witals\Framework\Http\AbstractController;
 
@@ -86,7 +86,7 @@ class DashboardController extends AbstractController
     protected function handlePluginPage(string $slug, array $menus): Response
     {
         // 1. Ensure WP is loaded & Hooks are fired FIRST
-        $wpLoader = app(\Prestoworld\Bridge\WordPress\WordPressLoader::class);
+        $wpLoader = app(\PrestoWorld\Bridge\WordPress\WordPressLoader::class);
         if (!$wpLoader->isLoaded()) {
             $wpLoader->load();
         }

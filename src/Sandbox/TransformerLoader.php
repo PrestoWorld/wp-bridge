@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Sandbox;
+namespace PrestoWorld\Bridge\WordPress\Sandbox;
 
-use Prestoworld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
+use PrestoWorld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
 
 /**
  * Class TransformerLoader
@@ -18,12 +18,12 @@ class TransformerLoader
 {
     protected string $pluginsPath;
     protected string $configPath;
-    protected ?\Prestoworld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService $registryService = null;
+    protected ?\PrestoWorld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService $registryService = null;
 
     public function __construct(
         string $pluginsPath,
         string $configPath,
-        ?\Prestoworld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService $registryService = null
+        ?\PrestoWorld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService $registryService = null
     ) {
         $this->pluginsPath = $pluginsPath;
         $this->configPath = $configPath;
@@ -55,31 +55,31 @@ class TransformerLoader
         return [
             [
                 'id' => 'global_variable',
-                'class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\GlobalVariableTransformer::class,
+                'class' => \PrestoWorld\Bridge\WordPress\Sandbox\Transformers\GlobalVariableTransformer::class,
                 'keywords' => ['$GLOBALS'],
                 'enabled' => true
             ],
             [
                 'id' => 'global_to_container',
-                'class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\GlobalToContainerTransformer::class,
+                'class' => \PrestoWorld\Bridge\WordPress\Sandbox\Transformers\GlobalToContainerTransformer::class,
                 'keywords' => ['global'],
                 'enabled' => true
             ],
             [
                 'id' => 'wpdb_direct_query',
-                'class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\WpdbDirectQueryTransformer::class,
+                'class' => \PrestoWorld\Bridge\WordPress\Sandbox\Transformers\WpdbDirectQueryTransformer::class,
                 'keywords' => ['$wpdb', 'query'],
                 'enabled' => true
             ],
             [
                 'id' => 'output_buffer',
-                'class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\DirectOutputBufferTransformer::class,
+                'class' => \PrestoWorld\Bridge\WordPress\Sandbox\Transformers\DirectOutputBufferTransformer::class,
                 'keywords' => ['echo', 'print', 'wp_die'],
                 'enabled' => true
             ],
             [
                 'id' => 'wp_options',
-                'class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\WpOptionsTransformer::class,
+                'class' => \PrestoWorld\Bridge\WordPress\Sandbox\Transformers\WpOptionsTransformer::class,
                 'keywords' => [
                     'get_option', 'update_option', 'add_option', 'delete_option',
                     'get_transient', 'set_transient', 'delete_transient'
@@ -209,7 +209,7 @@ class TransformerLoader
             'woocommerce' => [
                 [
                     'id' => 'wc_orders',
-                    'class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\WooCommerceOrderTransformer::class,
+                    'class' => \PrestoWorld\Bridge\WordPress\Sandbox\Transformers\WooCommerceOrderTransformer::class,
                     'keywords' => ['update_post_meta', 'wc_get_orders', 'WC_Order'],
                     'version_constraint' => '>=3.0'
                 ]

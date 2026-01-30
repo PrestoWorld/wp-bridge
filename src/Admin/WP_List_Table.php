@@ -1,9 +1,9 @@
 <?php
 
-namespace Prestoworld\Bridge\WordPress\Admin;
+namespace PrestoWorld\Bridge\WordPress\Admin;
 
 use Spiral\DataGrid\GridInterface;
-use Prestoworld\Bridge\WordPress\Admin\DataGrid\WPGridFactory;
+use PrestoWorld\Bridge\WordPress\Admin\DataGrid\WPGridFactory;
 
 /**
  * Modern implementation of WP_List_Table using Spiral DataGrid.

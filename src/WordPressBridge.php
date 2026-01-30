@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress;
+namespace PrestoWorld\Bridge\WordPress;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Sandbox;
+namespace PrestoWorld\Bridge\WordPress\Sandbox;
 
 /**
  * Class WordPressModuleLoader
@@ -45,7 +45,7 @@ class WordPressModuleLoader
             $bootstrapFile = $path . '/' . $plugin . '/bootstrap.php';
             if ($this->isNativePath($path) && file_exists($bootstrapFile)) {
                 $component = require_once $bootstrapFile;
-                if ($component instanceof \Prestoworld\Bridge\WordPress\Contracts\NativeComponentInterface) {
+                if ($component instanceof \PrestoWorld\Bridge\WordPress\Contracts\NativeComponentInterface) {
                     $component->boot();
                 }
                 continue;
@@ -75,7 +75,7 @@ class WordPressModuleLoader
             if (class_exists($class)) {
                 $theme = new $class();
                 error_log("ModuleLoader: Successfully instantiated native theme class: {$class}");
-                if ($theme instanceof \Prestoworld\Bridge\WordPress\Contracts\NativeComponentInterface) {
+                if ($theme instanceof \PrestoWorld\Bridge\WordPress\Contracts\NativeComponentInterface) {
                     $theme->boot();
                     // Store in container for later usage in ResponseBridge
                     app()->instance('wp.native_theme', $theme);

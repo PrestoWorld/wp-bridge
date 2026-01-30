@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Theme\Engines;
+namespace PrestoWorld\Bridge\WordPress\Theme\Engines;
 
-use Prestoworld\Bridge\WordPress\Theme\Gutenberg\CanvasLoader;
+use PrestoWorld\Bridge\WordPress\Theme\Gutenberg\CanvasLoader;
 
 class GutenbergEngine extends \PrestoWorld\Theme\Engines\AbstractEngine
 {

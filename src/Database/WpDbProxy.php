@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Database;
+namespace PrestoWorld\Bridge\WordPress\Database;
 
 use Witals\Framework\Application;
 

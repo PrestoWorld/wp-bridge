@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Routing;
+namespace PrestoWorld\Bridge\WordPress\Routing;
 
 use Witals\Framework\Application;
 use Witals\Framework\Http\Request;
@@ -147,7 +147,7 @@ class WordPressDispatcher
                 $html = '';
                 $nativeTheme = $this->app->has('wp.native_theme') ? $this->app->make('wp.native_theme') : null;
                 
-                if ($nativeTheme instanceof \Prestoworld\Bridge\WordPress\Contracts\NativeComponentInterface) {
+                if ($nativeTheme instanceof \PrestoWorld\Bridge\WordPress\Contracts\NativeComponentInterface) {
                     // Force the action to match the specific template hierarchy context
                     $response = $nativeTheme->handle($template, [
                         'post' => $postEntity,

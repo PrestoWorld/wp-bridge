@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Http\Controllers;
+namespace PrestoWorld\Bridge\WordPress\Http\Controllers;
 
 use Witals\Framework\Http\Response;
 use Witals\Framework\Http\Request;
@@ -46,7 +46,7 @@ class LoginController extends AbstractController
 
         if ($user) {
             error_log("LoginController: User found: {$user->login} (ID: {$user->id})");
-            $hasher = new \Prestoworld\Bridge\WordPress\Support\PasswordHash(8, true);
+            $hasher = new \PrestoWorld\Bridge\WordPress\Support\PasswordHash(8, true);
             $check = $hasher->CheckPassword($password, $user->password);
             
             // Check for plain MD5 (common in migrated/dev DBs)

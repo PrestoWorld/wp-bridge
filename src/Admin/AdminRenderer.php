@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Admin;
+namespace PrestoWorld\Bridge\WordPress\Admin;
 
 use Witals\Framework\Application;
 

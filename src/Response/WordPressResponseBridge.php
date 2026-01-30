@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Response;
+namespace PrestoWorld\Bridge\WordPress\Response;
 
 use Witals\Framework\Http\Response;
 
@@ -24,7 +24,7 @@ class WordPressResponseBridge
     public function execute(callable|object $handler): Response
     {
         // 1. If it's a Native Component, call handle() directly
-        if ($handler instanceof \Prestoworld\Bridge\WordPress\Contracts\NativeComponentInterface) {
+        if ($handler instanceof \PrestoWorld\Bridge\WordPress\Contracts\NativeComponentInterface) {
             return $handler->handle('render');
         }
 

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Theme\Legacy;
+namespace PrestoWorld\Bridge\WordPress\Theme\Legacy;
 
 use PrestoWorld\Theme\Theme;
 

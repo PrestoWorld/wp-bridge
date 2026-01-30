@@ -1,6 +1,6 @@
 <?php
 
-use Prestoworld\Bridge\WordPress\Exceptions\WordPressCompatibilityException;
+use PrestoWorld\Bridge\WordPress\Exceptions\WordPressCompatibilityException;
 
 if (!function_exists('is_admin')) {
     function is_admin() {

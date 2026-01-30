@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Support;
+namespace PrestoWorld\Bridge\WordPress\Support;
 
 /**
  * Portable PHP password hashing framework.

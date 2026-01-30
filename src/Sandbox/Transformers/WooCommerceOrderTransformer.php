@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Sandbox\Transformers;
+namespace PrestoWorld\Bridge\WordPress\Sandbox\Transformers;
 
-use Prestoworld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
-use Prestoworld\Bridge\WordPress\Sandbox\RequirementInterface;
-use Prestoworld\Bridge\WordPress\Sandbox\Requirements\PluginRequirement;
+use PrestoWorld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
+use PrestoWorld\Bridge\WordPress\Sandbox\RequirementInterface;
+use PrestoWorld\Bridge\WordPress\Sandbox\Requirements\PluginRequirement;
 
 /**
  * Class WooCommerceOrderTransformer

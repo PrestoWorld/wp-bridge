@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Sandbox\Transformers;
+namespace PrestoWorld\Bridge\WordPress\Sandbox\Transformers;
 
-use Prestoworld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
+use PrestoWorld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
 
 /**
  * Class WpdbDirectQueryTransformer

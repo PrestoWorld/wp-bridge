@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Sandbox\Services;
+namespace PrestoWorld\Bridge\WordPress\Sandbox\Services;
 
 use Cycle\ORM\EntityManagerInterface;
 use Cycle\ORM\ORMInterface;
-use Prestoworld\Bridge\WordPress\Sandbox\Models\TransformerRegistry;
+use PrestoWorld\Bridge\WordPress\Sandbox\Models\TransformerRegistry;
 
 /**
  * TransformerRegistryService
@@ -133,7 +133,7 @@ class TransformerRegistryService
             [
                 'plugin_slug' => 'woocommerce',
                 'transformer_id' => 'wc_orders',
-                'transformer_class' => \Prestoworld\Bridge\WordPress\Sandbox\Transformers\WooCommerceOrderTransformer::class,
+                'transformer_class' => \PrestoWorld\Bridge\WordPress\Sandbox\Transformers\WooCommerceOrderTransformer::class,
                 'keywords' => ['update_post_meta', 'wc_get_orders', 'WC_Order'],
                 'version_constraint' => '>=3.0',
                 'priority' => 80,

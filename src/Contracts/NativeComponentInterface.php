@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Contracts;
+namespace PrestoWorld\Bridge\WordPress\Contracts;
 
 use Witals\Framework\Http\Response;
 

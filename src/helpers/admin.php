@@ -92,7 +92,7 @@ if (!function_exists('get_hidden_columns')) {
 
 // Bootstrap WP_List_Table alias
 if (!class_exists('WP_List_Table')) {
-    $namespacedClass = \Prestoworld\Bridge\WordPress\Admin\WP_List_Table::class;
+    $namespacedClass = \PrestoWorld\Bridge\WordPress\Admin\WP_List_Table::class;
     // Trigger autoloader
     if (class_exists($namespacedClass)) {
         class_alias($namespacedClass, 'WP_List_Table');

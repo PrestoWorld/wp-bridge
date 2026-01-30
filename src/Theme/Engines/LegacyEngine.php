@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Theme\Engines;
+namespace PrestoWorld\Bridge\WordPress\Theme\Engines;
 
-use Prestoworld\Bridge\WordPress\Theme\Legacy\TemplateLoader;
+use PrestoWorld\Bridge\WordPress\Theme\Legacy\TemplateLoader;
 
 class LegacyEngine extends \PrestoWorld\Theme\Engines\AbstractEngine
 {

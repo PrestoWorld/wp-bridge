@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Settings;
+namespace PrestoWorld\Bridge\WordPress\Settings;
 
 class SettingsRegistry
 {

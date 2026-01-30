@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Providers;
+namespace PrestoWorld\Bridge\WordPress\Providers;
 
 use App\Support\ServiceProvider;
-use Prestoworld\Bridge\WordPress\WordPressLoader;
-use Prestoworld\Bridge\WordPress\WordPressBridge;
-use Prestoworld\Bridge\WordPress\Theme\ThemeLoader;
-use Prestoworld\Bridge\WordPress\Bootstrap\WordPressConceptBootstrap;
+use PrestoWorld\Bridge\WordPress\WordPressLoader;
+use PrestoWorld\Bridge\WordPress\WordPressBridge;
+use PrestoWorld\Bridge\WordPress\Theme\ThemeLoader;
+use PrestoWorld\Bridge\WordPress\Bootstrap\WordPressConceptBootstrap;
 
 class WordPressServiceProvider extends ServiceProvider
 {
@@ -26,8 +26,8 @@ class WordPressServiceProvider extends ServiceProvider
         });
 
         // Register Settings Registry
-        $this->singleton(\Prestoworld\Bridge\WordPress\Settings\SettingsRegistry::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Settings\SettingsRegistry();
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Settings\SettingsRegistry::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Settings\SettingsRegistry();
         });
         
         // Register WordPress Bridge
@@ -42,8 +42,8 @@ class WordPressServiceProvider extends ServiceProvider
         $this->app->addBootstrapper(WordPressConceptBootstrap::class);
 
         // Register Admin Bootstrapper (Not auto-booted, called by Driver)
-        $this->singleton(\Prestoworld\Bridge\WordPress\Bootstrap\WordPressAdminBootstrap::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Bootstrap\WordPressAdminBootstrap();
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Bootstrap\WordPressAdminBootstrap::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Bootstrap\WordPressAdminBootstrap();
         });
 
         // Register Theme Loader for Zero Migration
@@ -55,44 +55,44 @@ class WordPressServiceProvider extends ServiceProvider
         });
 
         // Register WordPress Dispatcher for Native Router Fallback
-        $this->singleton(\Prestoworld\Bridge\WordPress\Routing\WordPressDispatcher::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Routing\WordPressDispatcher($app);
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Routing\WordPressDispatcher::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Routing\WordPressDispatcher($app);
         });
 
         // --- OPTIONS ECOSYSTEM ---
         $this->singleton('wp.options', function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Options\OptionsManager();
+            return new \PrestoWorld\Bridge\WordPress\Options\OptionsManager();
         });
 
         // --- GLOBAL STATE ECOSYSTEM ---
-        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\GlobalManager::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Sandbox\GlobalManager();
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Sandbox\GlobalManager::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Sandbox\GlobalManager();
         });
-        $this->app->alias(\Prestoworld\Bridge\WordPress\Sandbox\GlobalManager::class, 'global');
+        $this->app->alias(\PrestoWorld\Bridge\WordPress\Sandbox\GlobalManager::class, 'global');
 
         // --- SANDBOX ECOSYSTEM ---
 
         // 1. Transformer Registry Service (Database-backed)
-        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService(
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService(
                 $app->make(\Cycle\ORM\ORMInterface::class),
                 $app->make(\Cycle\ORM\EntityManagerInterface::class)
             );
         });
 
         // 2. Transformer Loader (Auto-discovery)
-        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\TransformerLoader::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Sandbox\TransformerLoader(
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Sandbox\TransformerLoader::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Sandbox\TransformerLoader(
                 $app->basePath('public/wp-content/plugins'),
                 $app->basePath('config'),
-                $app->make(\Prestoworld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService::class)
+                $app->make(\PrestoWorld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService::class)
             );
         });
 
         // 2. Transformer Repository (Dynamic)
-        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\TransformerRepository::class, function ($app) {
-            $loader = $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerLoader::class);
-            $repo = new \Prestoworld\Bridge\WordPress\Sandbox\TransformerRepository();
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Sandbox\TransformerRepository::class, function ($app) {
+            $loader = $app->make(\PrestoWorld\Bridge\WordPress\Sandbox\TransformerLoader::class);
+            $repo = new \PrestoWorld\Bridge\WordPress\Sandbox\TransformerRepository();
             
             // Auto-discover and register all transformers
             $discovered = $loader->discover();
@@ -109,7 +109,7 @@ class WordPressServiceProvider extends ServiceProvider
         });
 
         // 2. Transformer Engine (Compiler) with Unified Storage
-        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class, function ($app) {
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Sandbox\TransformerEngine::class, function ($app) {
             // Reuse the same driver config as HookRegistry
             $driver = env('HOOK_REGISTRY_DRIVER', 'sqlite');
             
@@ -126,16 +126,16 @@ class WordPressServiceProvider extends ServiceProvider
             };
             
             $storage = $connection 
-                ? new \Prestoworld\Bridge\WordPress\Sandbox\Storage\UnifiedCacheStorage($driver, $connection)
+                ? new \PrestoWorld\Bridge\WordPress\Sandbox\Storage\UnifiedCacheStorage($driver, $connection)
                 : null;
             
-            $engine = new \Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine(
-                $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerRepository::class),
+            $engine = new \PrestoWorld\Bridge\WordPress\Sandbox\TransformerEngine(
+                $app->make(\PrestoWorld\Bridge\WordPress\Sandbox\TransformerRepository::class),
                 $storage
             );
             
             // Auto-indexing from discovered transformers
-            $loader = $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerLoader::class);
+            $loader = $app->make(\PrestoWorld\Bridge\WordPress\Sandbox\TransformerLoader::class);
             $discovered = $loader->discover();
             
             foreach ($discovered as $config) {
@@ -155,51 +155,51 @@ class WordPressServiceProvider extends ServiceProvider
         });
         
         // 3. Database Proxy
-        $this->singleton(\Prestoworld\Bridge\WordPress\Database\WpDbProxy::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Database\WpDbProxy($app);
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Database\WpDbProxy::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Database\WpDbProxy($app);
         });
 
         // 4. Override WPDB global via container alias (if accessed via app)
-        $this->app->alias(\Prestoworld\Bridge\WordPress\Database\WpDbProxy::class, 'wpdb');
+        $this->app->alias(\PrestoWorld\Bridge\WordPress\Database\WpDbProxy::class, 'wpdb');
 
         // 5. Isolation Sandbox
-        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\IsolationSandbox::class, function ($app) {
-             return new \Prestoworld\Bridge\WordPress\Sandbox\IsolationSandbox(
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Sandbox\IsolationSandbox::class, function ($app) {
+             return new \PrestoWorld\Bridge\WordPress\Sandbox\IsolationSandbox(
                  $app->make(\PrestoWorld\Hooks\HookManager::class),
                  $app->make(\PrestoWorld\Admin\AdminManager::class)
              );
         });
 
         // 6. Autoloader Interceptor
-        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class, function ($app) {
-            $engine = $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class);
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class, function ($app) {
+            $engine = $app->make(\PrestoWorld\Bridge\WordPress\Sandbox\TransformerEngine::class);
             $storage = $engine->getStorage();
-            return new \Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor(
-                $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class),
+            return new \PrestoWorld\Bridge\WordPress\Sandbox\AutoloaderInterceptor(
+                $app->make(\PrestoWorld\Bridge\WordPress\Sandbox\TransformerEngine::class),
                 $storage
             );
         });
 
         // 7. WordPress Module Loader
-        $this->singleton(\Prestoworld\Bridge\WordPress\Sandbox\WordPressModuleLoader::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Sandbox\WordPressModuleLoader(
-                $app->make(\Prestoworld\Bridge\WordPress\Sandbox\TransformerEngine::class),
-                $app->make(\Prestoworld\Bridge\WordPress\Sandbox\IsolationSandbox::class),
-                $app->make(\Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class)
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Sandbox\WordPressModuleLoader::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Sandbox\WordPressModuleLoader(
+                $app->make(\PrestoWorld\Bridge\WordPress\Sandbox\TransformerEngine::class),
+                $app->make(\PrestoWorld\Bridge\WordPress\Sandbox\IsolationSandbox::class),
+                $app->make(\PrestoWorld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class)
             );
         });
 
         // --- RESPONSE BRIDGE ---
 
         // 7. Response Interceptor
-        $this->singleton(\Prestoworld\Bridge\WordPress\Response\ResponseInterceptor::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Response\ResponseInterceptor();
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Response\ResponseInterceptor::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Response\ResponseInterceptor();
         });
 
         // 8. WordPress Response Bridge
-        $this->singleton(\Prestoworld\Bridge\WordPress\Response\WordPressResponseBridge::class, function ($app) {
-            return new \Prestoworld\Bridge\WordPress\Response\WordPressResponseBridge(
-                $app->make(\Prestoworld\Bridge\WordPress\Response\ResponseInterceptor::class)
+        $this->singleton(\PrestoWorld\Bridge\WordPress\Response\WordPressResponseBridge::class, function ($app) {
+            return new \PrestoWorld\Bridge\WordPress\Response\WordPressResponseBridge(
+                $app->make(\PrestoWorld\Bridge\WordPress\Response\ResponseInterceptor::class)
             );
         });
 
@@ -208,11 +208,11 @@ class WordPressServiceProvider extends ServiceProvider
             $themeManager = $this->app->make(\PrestoWorld\Theme\ThemeManager::class);
             $themeManager->registerEngine(
                 \PrestoWorld\Theme\ThemeType::GUTENBERG->value,
-                \Prestoworld\Bridge\WordPress\Theme\Engines\GutenbergEngine::class
+                \PrestoWorld\Bridge\WordPress\Theme\Engines\GutenbergEngine::class
             );
             $themeManager->registerEngine(
                 \PrestoWorld\Theme\ThemeType::LEGACY->value,
-                \Prestoworld\Bridge\WordPress\Theme\Engines\LegacyEngine::class
+                \PrestoWorld\Bridge\WordPress\Theme\Engines\LegacyEngine::class
             );
         }
     }
@@ -228,11 +228,11 @@ class WordPressServiceProvider extends ServiceProvider
         // We are simulating WP behavior natively.
 
         // Activate Autoloader Interceptor
-        $interceptor = $this->app->make(\Prestoworld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class);
+        $interceptor = $this->app->make(\PrestoWorld\Bridge\WordPress\Sandbox\AutoloaderInterceptor::class);
         $interceptor->register();
 
         // Load WordPress Ecosystem via Sandbox
-        $moduleLoader = $this->app->make(\Prestoworld\Bridge\WordPress\Sandbox\WordPressModuleLoader::class);
+        $moduleLoader = $this->app->make(\PrestoWorld\Bridge\WordPress\Sandbox\WordPressModuleLoader::class);
         $wpContent = $this->app->basePath('public/wp-content');
 
         // --- 1. NATIVE ECOSYSTEM (Secure Paths, No Sandbox) ---
@@ -284,7 +284,7 @@ class WordPressServiceProvider extends ServiceProvider
         if ($this->app->has(\PrestoWorld\Admin\AdminManager::class)) {
             $this->app->make(\PrestoWorld\Admin\AdminManager::class)->registerDriver(
                 'wordpress', 
-                \Prestoworld\Bridge\WordPress\Dashboard\WordPressDashboardDriver::class
+                \PrestoWorld\Bridge\WordPress\Dashboard\WordPressDashboardDriver::class
             );
         }
     }

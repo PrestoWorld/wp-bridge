@@ -606,7 +606,7 @@ return [
 
 namespace App\Transformers;
 
-use Prestoworld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
+use PrestoWorld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
 
 class MyCustomTransformer implements TransformerInterface
 {
@@ -655,7 +655,7 @@ return [
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Prestoworld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService;
+use PrestoWorld\Bridge\WordPress\Sandbox\Services\TransformerRegistryService;
 
 class SyncTransformers extends Command
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Theme\Gutenberg;
+namespace PrestoWorld\Bridge\WordPress\Theme\Gutenberg;
 
 use PrestoWorld\Theme\Theme;
 

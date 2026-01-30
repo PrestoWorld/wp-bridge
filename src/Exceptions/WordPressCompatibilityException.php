@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Exceptions;
+namespace PrestoWorld\Bridge\WordPress\Exceptions;
 
 use RuntimeException;
 

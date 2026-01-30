@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Sandbox;
+namespace PrestoWorld\Bridge\WordPress\Sandbox;
 
 use PrestoWorld\Hooks\HookManager;
 use PrestoWorld\Admin\AdminManager;

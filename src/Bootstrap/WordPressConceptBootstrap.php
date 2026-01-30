@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Bootstrap;
+namespace PrestoWorld\Bridge\WordPress\Bootstrap;
 
 use Witals\Framework\Application;
 use PrestoWorld\Hooks\HookManager;

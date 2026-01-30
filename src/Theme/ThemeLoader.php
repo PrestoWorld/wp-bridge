@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Theme;
+namespace PrestoWorld\Bridge\WordPress\Theme;
 
 use Witals\Framework\Application;
 use PrestoWorld\Theme\ThemeManager;

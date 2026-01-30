@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Sandbox\Requirements;
+namespace PrestoWorld\Bridge\WordPress\Sandbox\Requirements;
 
-use Prestoworld\Bridge\WordPress\Sandbox\RequirementInterface;
-use Prestoworld\Bridge\WordPress\Sandbox\Context;
+use PrestoWorld\Bridge\WordPress\Sandbox\RequirementInterface;
+use PrestoWorld\Bridge\WordPress\Sandbox\Context;
 
 /**
  * Class PluginRequirement

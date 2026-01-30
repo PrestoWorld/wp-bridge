@@ -1,6 +1,6 @@
 <?php
 
-namespace Prestoworld\Bridge\WordPress\Admin\DataGrid;
+namespace PrestoWorld\Bridge\WordPress\Admin\DataGrid;
 
 use Spiral\DataGrid\Compiler;
 use Spiral\DataGrid\Grid;

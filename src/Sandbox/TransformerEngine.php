@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Prestoworld\Bridge\WordPress\Sandbox;
+namespace PrestoWorld\Bridge\WordPress\Sandbox;
 
-use Prestoworld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
+use PrestoWorld\Bridge\WordPress\Sandbox\Transformers\TransformerInterface;
 
 /**
  * Class TransformerEngine
