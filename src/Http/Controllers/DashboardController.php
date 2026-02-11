@@ -83,6 +83,8 @@ class DashboardController extends AbstractController
         return Response::json(['success' => true, 'message' => 'Admin Ajax Simulated']);
     }
 
+
+
     protected function handlePluginPage(string $slug, array $menus): Response
     {
         // 1. Ensure WP is loaded & Hooks are fired FIRST

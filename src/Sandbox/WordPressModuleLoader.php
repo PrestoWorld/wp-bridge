@@ -33,8 +33,9 @@ class WordPressModuleLoader
     /**
      * Load active plugins
      */
-    public function loadPlugins(string $path, array $activePlugins = []): void
+    public function loadPlugins(string $path, ?array $activePlugins = []): void
     {
+        $activePlugins = $activePlugins ?? [];
         if (!is_dir($path)) return;
 
         foreach ($activePlugins as $plugin) {

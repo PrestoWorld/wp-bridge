@@ -33,7 +33,7 @@ class OptionsManager
 
         // Fetch from DB if not in autoloaded or runtime cache
         $value = $this->fetchFromDb($option);
-        if ($value !== false) {
+        if ($value !== false && $value !== null) {
             $this->runtimeCache[$option] = $value;
             return $value;
         }

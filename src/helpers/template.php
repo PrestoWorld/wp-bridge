@@ -92,6 +92,8 @@ if (!function_exists('get_the_author_meta')) {
     }
 }
 
+
+
 if (!function_exists('get_template_directory')) {
     function get_template_directory() {
         $theme = app(\PrestoWorld\Theme\ThemeManager::class)->getActiveTheme();

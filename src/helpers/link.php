@@ -3,18 +3,16 @@
 if (!function_exists('home_url')) {
     function home_url($path = '') {
         $request = app(\Witals\Framework\Http\Request::class);
-        $host = $request->header('Host');
+        $host = $request->header('X-Forwarded-Host') ?: $request->header('Host') ?: $_SERVER['HTTP_HOST'] ?: 'localhost';
         
-        if ($host) {
-            $protocol = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? "https" : "http";
-            $uri = $request->uri();
-            if (str_starts_with($uri, 'http')) {
-                $protocol = parse_url($uri, PHP_URL_SCHEME);
-            }
-            $baseUrl = "$protocol://$host";
-        } else {
-            $baseUrl = env('APP_URL', 'http://localhost');
+        $protocol = 'http';
+        if ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') || 
+            (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')) {
+            $protocol = 'https';
         }
+        
+        $baseUrl = "$protocol://$host";
+
         
         return rtrim($baseUrl, '/') . '/' . ltrim($path, '/');
     }

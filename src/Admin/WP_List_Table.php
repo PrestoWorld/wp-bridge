@@ -432,11 +432,11 @@ abstract class WP_List_Table
         <?php
     }
 
+
     protected function extra_tablenav($which) 
     {
         // For plugins to hook into
     }
-
     protected function bulk_actions(string $which = ''): void
     {
         $actions = $this->get_bulk_actions();
