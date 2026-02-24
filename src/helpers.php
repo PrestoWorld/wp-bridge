@@ -14,3 +14,4 @@ require_once __DIR__ . '/helpers/admin.php';
 require_once __DIR__ . '/helpers/template.php';
 require_once __DIR__ . '/helpers/link.php';
 require_once __DIR__ . '/helpers/query.php';
+require_once __DIR__ . '/helpers/i18n.php';
