@@ -17,6 +17,6 @@
   "minimum-stability": "dev",
   "require": {
     "spiral/data-grid": "^3.0",
-    "prestoworld/marketplace-sdk": "*"
+    "prestoworld/wporg-marketplace": "*"
   }
 }
