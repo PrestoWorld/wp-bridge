@@ -115,8 +115,7 @@ class WordPressSkin implements SkinInterface
     {
         return [
             'css' => [
-                'https://s.w.org/wp-includes/css/dashicons.min.css',
-                'https://s.w.org/wp-admin/css/wp-admin.min.css',
+                'https://s.w.org/wp-includes/css/dashicons.min.css?ver=6.7',
             ],
             'js' => [],
         ];
