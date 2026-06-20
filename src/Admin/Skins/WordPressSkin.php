@@ -12,6 +12,14 @@ class WordPressSkin implements SkinInterface
     protected ViewFactory $view;
     protected string $namespace = 'wp-admin';
 
+    /** WordPress-style URL for each screenId */
+    public const SCREEN_URLS = [
+        'dashboard' => 'index.php',
+        'posts'     => 'edit.php',
+        'plugins'   => 'plugins.php',
+        'settings'  => 'options-general.php',
+    ];
+
     protected const ICON_MAP = [
         'LayoutDashboard'  => 'dashicons-dashboard',
         'FileText'         => 'dashicons-admin-post',
@@ -117,5 +125,10 @@ class WordPressSkin implements SkinInterface
     public static function iconClass(?string $icon): string
     {
         return self::ICON_MAP[$icon] ?? 'dashicons-admin-generic';
+    }
+
+    public static function screenUrl(string $screenId): string
+    {
+        return self::SCREEN_URLS[$screenId] ?? 'index.php';
     }
 }

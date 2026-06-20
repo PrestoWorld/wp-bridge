@@ -112,44 +112,67 @@ $currentScreenTitle = $screenMap[$activeScreen] ?? 'Dashboard';
         <div id="adminmenuwrap">
             <ul id="adminmenu">
             <?php
-            $itemIndex = 0;
+            $sectionIndex = 0;
             foreach ($menuSections as $section):
                 $sectionItems = $section['items'] ?? [];
                 if (empty($sectionItems)) continue;
-                $firstItem = $sectionItems[0];
-                $firstScreenId = $firstItem['screenId'] ?? '';
-                $isActive = $firstScreenId === $activeScreen;
-                ?>
-                <?php if ($itemIndex > 0): ?>
-                <li class="wp-menu-separator" role="presentation"><div class="separator"></div></li>
-                <?php endif; ?>
-                <li class="menu-top menu-icon-<?= htmlspecialchars($firstScreenId) ?> <?= $isActive ? 'wp-has-current-submenu wp-menu-open' : '' ?>">
-                    <a href="?screen=<?= urlencode($firstScreenId) ?>"
-                       class="<?= $isActive ? 'wp-has-current-submenu wp-menu-open menu-top' : 'wp-not-current-submenu menu-top' ?>">
-                        <div class="wp-menu-arrow"><div></div></div>
-                        <div class="wp-menu-image dashicons-before <?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::iconClass($firstItem['icon'] ?? '') ?>"><br></div>
-                        <div class="wp-menu-name"><?= htmlspecialchars($firstItem['label'] ?? '') ?></div>
-                    </a>
-                    <?php if (count($sectionItems) > 1): ?>
-                    <div class="wp-submenu wp-submenu-wrap">
-                        <div class="wp-submenu-head" aria-hidden="true"><?= htmlspecialchars($section['title'] ?? '') ?></div>
-                        <ul>
-                        <?php foreach ($sectionItems as $si): ?>
-                            <?php $siActive = ($si['screenId'] ?? '') === $activeScreen; ?>
-                            <li class="<?= $siActive ? 'current' : '' ?>">
-                                <a href="?screen=<?= urlencode($si['screenId'] ?? '') ?>"
-                                   class="<?= $siActive ? 'current' : '' ?>"
-                                   aria-current="<?= $siActive ? 'page' : 'false' ?>">
-                                    <?= htmlspecialchars($si['label'] ?? '') ?>
-                                </a>
-                            </li>
-                        <?php endforeach; ?>
-                        </ul>
-                    </div>
+                $sectionTitle = $section['title'] ?? '';
+
+                if (count($sectionItems) === 1):
+                    // Single item — render as flat top-level menu entry
+                    $item = $sectionItems[0];
+                    $screenId = $item['screenId'] ?? '';
+                    $isActive = $screenId === $activeScreen;
+                    ?>
+                    <?php if ($sectionIndex > 0): ?>
+                    <li class="wp-menu-separator" role="presentation"><div class="separator"></div></li>
                     <?php endif; ?>
-                </li>
+                    <li class="menu-top menu-icon-<?= htmlspecialchars($screenId) ?> <?= $isActive ? 'wp-has-current-submenu wp-menu-open' : '' ?>">
+                        <a href="<?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::screenUrl($screenId) ?>"
+                           class="<?= $isActive ? 'wp-has-current-submenu wp-menu-open menu-top' : 'wp-not-current-submenu menu-top' ?>">
+                            <div class="wp-menu-arrow"><div></div></div>
+                            <div class="wp-menu-image dashicons-before <?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::iconClass($item['icon'] ?? '') ?>"><br></div>
+                            <div class="wp-menu-name"><?= htmlspecialchars($item['label'] ?? '') ?></div>
+                        </a>
+                    </li>
+                <?php else:
+                    // Multiple items — render first as parent, rest as submenu
+                    $firstItem = $sectionItems[0];
+                    $firstScreenId = $firstItem['screenId'] ?? '';
+                    $hasActiveChild = false;
+                    foreach ($sectionItems as $si) {
+                        if (($si['screenId'] ?? '') === $activeScreen) { $hasActiveChild = true; break; }
+                    }
+                    ?>
+                    <?php if ($sectionIndex > 0): ?>
+                    <li class="wp-menu-separator" role="presentation"><div class="separator"></div></li>
+                    <?php endif; ?>
+                    <li class="menu-top menu-icon-<?= htmlspecialchars($firstScreenId) ?> <?= $hasActiveChild ? 'wp-has-current-submenu wp-menu-open' : '' ?>">
+                        <a href="<?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::screenUrl($firstScreenId) ?>"
+                           class="<?= $hasActiveChild ? 'wp-has-current-submenu wp-menu-open menu-top' : 'wp-not-current-submenu menu-top' ?>">
+                            <div class="wp-menu-arrow"><div></div></div>
+                            <div class="wp-menu-image dashicons-before <?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::iconClass($firstItem['icon'] ?? '') ?>"><br></div>
+                            <div class="wp-menu-name"><?= htmlspecialchars($firstItem['label'] ?? '') ?></div>
+                        </a>
+                        <div class="wp-submenu wp-submenu-wrap">
+                            <div class="wp-submenu-head" aria-hidden="true"><?= htmlspecialchars($sectionTitle) ?></div>
+                            <ul>
+                            <?php foreach ($sectionItems as $si):
+                                $siActive = ($si['screenId'] ?? '') === $activeScreen; ?>
+                                <li class="<?= $siActive ? 'current' : '' ?>">
+                                    <a href="<?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::screenUrl($si['screenId'] ?? '') ?>"
+                                       class="<?= $siActive ? 'current' : '' ?>"
+                                       aria-current="<?= $siActive ? 'page' : 'false' ?>">
+                                        <?= htmlspecialchars($si['label'] ?? '') ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    </li>
+                <?php endif; ?>
             <?php
-                $itemIndex++;
+                $sectionIndex++;
             endforeach;
             ?>
             </ul>
@@ -197,12 +220,13 @@ $currentScreenTitle = $screenMap[$activeScreen] ?? 'Dashboard';
                         <?= $content ?>
                     <?php else: ?>
                         <div class="presto-content-area">
-                            <?php $this->view->make('wp-admin::content', [
-                                'activeScreen' => $activeScreen,
-                                'widgets' => $widgets,
-                                'initialState' => $initialState,
-                                'user' => $user,
-                            ])->render() ?>
+                            <?php
+                            // content.php is included directly via PhpEngine
+                            $__contentPath = __DIR__ . '/content.php';
+                            if (file_exists($__contentPath)) {
+                                include $__contentPath;
+                            }
+                            ?>
                         </div>
                     <?php endif; ?>
                 </div>
