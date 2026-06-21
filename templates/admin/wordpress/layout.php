@@ -94,6 +94,7 @@
         #adminmenu .menu-top > a:hover { color: #72aee6; }
         #adminmenu .menu-top.wp-has-current-submenu > a { color: #fff; background: #2c3338; }
         #adminmenu .wp-menu-image { width: 20px; text-align: center; font-size: 16px; flex-shrink: 0; }
+        #adminmenu .wp-menu-name { padding: 0; }
 
         /* Submenu */
         #adminmenu .wp-submenu {
