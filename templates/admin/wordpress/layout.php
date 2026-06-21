@@ -19,12 +19,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= htmlspecialchars($title) ?> &lsaquo; PrestoWorld</title>
 
-    <link rel="preconnect" href="https://s.w.org" />
-    <link rel="dns-prefetch" href="https://s.w.org" />
-    <link rel="stylesheet" id="dashicons-css" href="https://s.w.org/wp-includes/css/dashicons.min.css?ver=6.7" media="all" />
-    <link rel="stylesheet" id="wp-admin-css" href="https://s.w.org/wp-admin/css/wp-admin.min.css?ver=6.7" media="print" onload="this.media='all'" />
-    <link rel="stylesheet" id="buttons-css" href="https://s.w.org/wp-includes/css/buttons.min.css?ver=6.7" media="print" onload="this.media='all'" />
-    <link rel="stylesheet" id="forms-css" href="https://s.w.org/wp-admin/css/forms.min.css?ver=6.7" media="print" onload="this.media='all'" />
+    <meta name="presto-cdn-base" content="" />
+    <!-- CDN assets will be served from presto-cdn in production -->
 
     <style>
         /* ── Critical WordPress admin layout (no external CSS required) ── */
@@ -93,7 +89,15 @@
         }
         #adminmenu .menu-top > a:hover { color: #72aee6; }
         #adminmenu .menu-top.wp-has-current-submenu > a { color: #fff; background: #2c3338; }
-        #adminmenu .wp-menu-image { width: 20px; text-align: center; font-size: 16px; flex-shrink: 0; }
+        #adminmenu .wp-menu-image {
+            width: 20px; height: 20px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #adminmenu .wp-menu-icon-placeholder {
+            display: inline-block; width: 8px; height: 8px;
+            border-radius: 50%; background: #787c82;
+        }
+        #adminmenu .menu-top.wp-has-current-submenu .wp-menu-icon-placeholder { background: #72aee6; }
         #adminmenu .wp-menu-name { padding: 0; }
 
         /* Submenu */
@@ -193,17 +197,17 @@ $adminBarItems = $adminBar['items'] ?? [];
         </ul>
         <ul id="wp-admin-bar-top-secondary" class="ab-top-menu">
             <?php foreach ($adminBarItems as $item): ?>
-            <li id="wp-admin-bar-<?= htmlspecialchars($item['id'] ?? '') ?>">
+                <li id="wp-admin-bar-<?= htmlspecialchars($item['id'] ?? '') ?>">
                 <?php if (($item['type'] ?? '') === 'link'): ?>
                 <a class="ab-item" href="<?= htmlspecialchars($item['href'] ?? '#') ?>">
                     <?php if (!empty($item['icon'])): ?>
-                    <span class="ab-icon <?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::iconClass($item['icon']) ?>"></span>
+                    <span class="ab-icon" data-icon="<?= htmlspecialchars($item['icon']) ?>"></span>
                     <?php endif; ?>
                     <?= htmlspecialchars($item['label'] ?? '') ?>
                 </a>
                 <?php elseif (($item['type'] ?? '') === 'notification'): ?>
                 <a class="ab-item" href="#">
-                    <span class="ab-icon <?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::iconClass($item['icon'] ?? 'Bell') ?>"></span>
+                    <span class="ab-icon" data-icon="<?= htmlspecialchars($item['icon'] ?? 'Bell') ?>"></span>
                     <span class="ab-label"><?= htmlspecialchars((string)($item['badge'] ?? '')) ?></span>
                 </a>
                 <?php else: ?>
@@ -258,8 +262,9 @@ $currentScreenTitle = $screenMap[$activeScreen] ?? 'Dashboard';
                     <li class="menu-top menu-icon-<?= htmlspecialchars($screenId) ?> <?= $isActive ? 'wp-has-current-submenu wp-menu-open' : '' ?>">
                         <a href="<?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::screenUrl($screenId) ?>"
                            class="<?= $isActive ? 'wp-has-current-submenu wp-menu-open menu-top' : 'wp-not-current-submenu menu-top' ?>">
-                            <div class="wp-menu-arrow"><div></div></div>
-                            <div class="wp-menu-image dashicons-before <?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::iconClass($item['icon'] ?? '') ?>"><br></div>
+                            <div class="wp-menu-image" data-icon="<?= htmlspecialchars($item['icon'] ?? '') ?>">
+                                <span class="wp-menu-icon-placeholder"></span>
+                            </div>
                             <div class="wp-menu-name"><?= htmlspecialchars($item['label'] ?? '') ?></div>
                         </a>
                     </li>
@@ -278,8 +283,9 @@ $currentScreenTitle = $screenMap[$activeScreen] ?? 'Dashboard';
                     <li class="menu-top menu-icon-<?= htmlspecialchars($firstScreenId) ?> <?= $hasActiveChild ? 'wp-has-current-submenu wp-menu-open' : '' ?>">
                         <a href="<?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::screenUrl($firstScreenId) ?>"
                            class="<?= $hasActiveChild ? 'wp-has-current-submenu wp-menu-open menu-top' : 'wp-not-current-submenu menu-top' ?>">
-                            <div class="wp-menu-arrow"><div></div></div>
-                            <div class="wp-menu-image dashicons-before <?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::iconClass($firstItem['icon'] ?? '') ?>"><br></div>
+                            <div class="wp-menu-image" data-icon="<?= htmlspecialchars($firstItem['icon'] ?? '') ?>">
+                                <span class="wp-menu-icon-placeholder"></span>
+                            </div>
                             <div class="wp-menu-name"><?= htmlspecialchars($firstItem['label'] ?? '') ?></div>
                         </a>
                         <div class="wp-submenu wp-submenu-wrap">

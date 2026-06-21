@@ -114,9 +114,7 @@ class WordPressSkin implements SkinInterface
     public function getAssets(): array
     {
         return [
-            'css' => [
-                'https://s.w.org/wp-includes/css/dashicons.min.css?ver=6.7',
-            ],
+            'css' => [],
             'js' => [],
         ];
     }
