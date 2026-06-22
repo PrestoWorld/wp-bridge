@@ -60,5 +60,90 @@ class BridgeServiceProvider extends ServiceProvider
         if (is_dir($wpBridgeModels)) {
             $this->app->instance('db.entity_paths', [$wpBridgeModels]);
         }
+
+        $this->configureThemePaths();
+    }
+
+    protected function configureThemePaths(): void
+    {
+        $contentDir = null;
+        $config = $this->app->has(WordPressConfig::class)
+            ? $this->app->make(WordPressConfig::class)
+            : null;
+
+        if ($config !== null && isset($config['WP_CONTENT_DIR'])) {
+            $contentDir = $config['WP_CONTENT_DIR'];
+        } else {
+            $candidates = [
+                $this->app->basePath('wp-content'),
+                $this->app->basePath('content'),
+                dirname($this->app->basePath()) . '/wp-content',
+            ];
+            foreach ($candidates as $path) {
+                if (is_dir($path)) {
+                    $contentDir = realpath($path);
+                    break;
+                }
+            }
+        }
+
+        if ($contentDir === null) {
+            return;
+        }
+
+        putenv("PW_CONTENT_DIR={$contentDir}");
+        $_ENV['PW_CONTENT_DIR'] = $contentDir;
+
+        $contentUrl = '/' . basename($contentDir);
+        putenv("PW_CONTENT_URL={$contentUrl}");
+        $_ENV['PW_CONTENT_URL'] = $contentUrl;
+
+        $themesDir = $contentDir . '/themes';
+        if (!is_dir($themesDir)) {
+            return;
+        }
+
+        $theme = getenv('PW_THEME_ACTIVE') ?: $this->detectActiveTheme($themesDir);
+        if ($theme === null) {
+            return;
+        }
+
+        $themeDir = $themesDir . '/' . $theme;
+        if (!is_dir($themeDir)) {
+            return;
+        }
+
+        $themeDir = realpath($themeDir);
+
+        putenv("PW_THEME_ACTIVE={$theme}");
+        $_ENV['PW_THEME_ACTIVE'] = $theme;
+
+        putenv("PW_THEME_DIR={$themeDir}");
+        $_ENV['PW_THEME_DIR'] = $themeDir;
+    }
+
+    protected function detectActiveTheme(string $themesDir): ?string
+    {
+        $entries = scandir($themesDir);
+        if ($entries === false) {
+            return null;
+        }
+
+        $themes = array_values(
+            array_filter($entries, fn(string $d): bool => $d[0] !== '.' && is_dir("{$themesDir}/{$d}"))
+        );
+
+        if (empty($themes)) {
+            return null;
+        }
+
+        $preferred = ['twentytwentyfive', 'twentytwentyfour', 'twentytwentythree'];
+        foreach ($preferred as $name) {
+            if (in_array($name, $themes, true)) {
+                return $name;
+            }
+        }
+
+        return $themes[0];
     }
 }
