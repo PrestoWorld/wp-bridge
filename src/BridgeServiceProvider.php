@@ -55,5 +55,10 @@ class BridgeServiceProvider extends ServiceProvider
 
         putenv("PW_TABLE_PREFIX={$prefix}");
         $_ENV['PW_TABLE_PREFIX'] = $prefix;
+
+        $wpBridgeModels = $this->app->basePath('vendor/prestoworld/wp-bridge/src/Models');
+        if (is_dir($wpBridgeModels)) {
+            $this->app->instance('db.entity_paths', [$wpBridgeModels]);
+        }
     }
 }
