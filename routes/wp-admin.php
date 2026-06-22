@@ -20,5 +20,7 @@ $router->get('/wp-admin/admin.php', \App\Http\Controllers\Admin\SpaController::c
 $router->get('/wp-admin/edit.php', \App\Http\Controllers\Admin\SpaController::class);
 $router->get('/wp-admin/plugins.php', \App\Http\Controllers\Admin\SpaController::class);
 $router->get('/wp-admin/options-general.php', \App\Http\Controllers\Admin\SpaController::class);
+$router->get('/wp-admin/themes.php', \App\Http\Controllers\Admin\SpaController::class);
+$router->post('/wp-admin/themes.php', [\App\Http\Controllers\Admin\AdminApiController::class, 'activateThemeFromForm']);
 $router->get('/wp-admin/admin-ajax.php', [\App\Http\Controllers\Admin\SpaController::class, 'adminAjax']);
 $router->post('/wp-admin/admin-ajax.php', [\App\Http\Controllers\Admin\SpaController::class, 'adminAjax']);
