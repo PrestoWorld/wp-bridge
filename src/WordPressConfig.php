@@ -61,6 +61,7 @@ class WordPressConfig
     {
         $candidates = [
             $basePath . '/wp-config.php',
+            $basePath . '/public/wp-config.php',
             dirname($basePath) . '/wp-config.php',
         ];
 
