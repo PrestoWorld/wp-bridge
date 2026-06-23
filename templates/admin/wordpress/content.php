@@ -52,7 +52,18 @@
                     </div>
                     <div class="inside">
                         <div class="main">
-                            <p>Welcome to PrestoWorld. Content from your database will appear here.</p>
+                            <?php
+                            $db = app(\Cycle\Database\DatabaseInterface::class);
+                            $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
+                            $postCount = (int) ($db->select('COUNT(*) as c')->from($pfx . 'posts')->where('post_status', '!=', 'auto-draft')->fetch()['c'] ?? 0);
+                            $userCount = (int) ($db->select('COUNT(*) as c')->from($pfx . 'users')->fetch()['c'] ?? 0);
+                            $commentCount = (int) ($db->select('COUNT(*) as c')->from($pfx . 'comments')->fetch()['c'] ?? 0);
+                            ?>
+                            <ul style="list-style:none;margin:0;padding:0;">
+                                <li style="padding:4px 0;"><strong><?= $postCount ?></strong> Posts</li>
+                                <li style="padding:4px 0;"><strong><?= $userCount ?></strong> Users</li>
+                                <li style="padding:4px 0;"><strong><?= $commentCount ?></strong> Comments</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
@@ -60,16 +71,19 @@
 
         <?php elseif ($activeScreen === 'posts'): ?>
 
+            <?php
+            $db = app(\Cycle\Database\DatabaseInterface::class);
+            $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
+            $posts = $db->select('*')->from($pfx . 'posts')->where('post_type', 'post')->where('post_status', '!=', 'auto-draft')->orderBy('post_date', 'DESC')->fetchAll();
+            $totalPosts = count($posts);
+            ?>
             <div id="post-body-content">
-                <div class="notice notice-info inline">
-                    <p>Post management is available through the API. Data from <code>pw_posts</code> will render here.</p>
-                </div>
                 <div class="tablenav top">
                     <div class="alignleft actions">
                         <select name="cat" id="cat" class="postform"><option value="0">All categories</option></select>
                         <input type="submit" class="button" value="Filter" />
                     </div>
-                    <div class="tablenav-pages one-page"><span class="displaying-num">0 items</span></div>
+                    <div class="tablenav-pages one-page"><span class="displaying-num"><?= $totalPosts ?> items</span></div>
                     <br class="clear" />
                 </div>
                 <table class="wp-list-table widefat fixed striped posts">
@@ -81,7 +95,26 @@
                         <th class="manage-column column-date">Date</th>
                     </tr></thead>
                     <tbody id="the-list">
+                        <?php if (empty($posts)): ?>
                         <tr class="no-items"><td class="colspanchange" colspan="5">No posts found.</td></tr>
+                        <?php else: ?>
+                        <?php foreach ($posts as $p): $pid = $p['ID'] ?? $p['id']; ?>
+                        <tr>
+                            <th class="check-column"><input type="checkbox" /></th>
+                            <td class="title column-title has-row-actions column-primary">
+                                <strong><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>"><?= htmlspecialchars($p['post_title'] ?? '') ?></a></strong>
+                                <div class="row-actions">
+                                    <span class="edit"><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>&action=edit">Edit</a></span>
+                                    <span class="trash"><a href="#">Trash</a></span>
+                                    <span class="view"><a href="/?p=<?= $pid ?>">View</a></span>
+                                </div>
+                            </td>
+                            <td class="author column-author">admin</td>
+                            <td class="categories column-categories">Uncategorized</td>
+                            <td class="date column-date"><?= htmlspecialchars(date('Y-m-d', strtotime($p['post_date'] ?? ''))) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -134,10 +167,12 @@
 
         <?php elseif ($activeScreen === 'edit-pages'): ?>
 
+            <?php
+            $db = app(\Cycle\Database\DatabaseInterface::class);
+            $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
+            $pages = $db->select('*')->from($pfx . 'posts')->where('post_type', 'page')->where('post_status', '!=', 'auto-draft')->orderBy('post_date', 'DESC')->fetchAll();
+            ?>
             <div id="post-body-content">
-                <div class="notice notice-info inline">
-                    <p>Pages management — data from <code>pw_posts</code> will render here.</p>
-                </div>
                 <table class="wp-list-table widefat fixed striped pages">
                     <thead><tr>
                         <td class="manage-column column-cb check-column"><input type="checkbox" /></td>
@@ -146,17 +181,36 @@
                         <th class="manage-column column-date">Date</th>
                     </tr></thead>
                     <tbody id="the-list">
+                        <?php if (empty($pages)): ?>
                         <tr class="no-items"><td class="colspanchange" colspan="4">No pages found.</td></tr>
+                        <?php else: ?>
+                        <?php foreach ($pages as $p): $pid = $p['ID'] ?? $p['id']; ?>
+                        <tr>
+                            <th class="check-column"><input type="checkbox" /></th>
+                            <td class="title column-title has-row-actions column-primary">
+                                <strong><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>&action=edit"><?= htmlspecialchars($p['post_title'] ?? '') ?></a></strong>
+                                <div class="row-actions">
+                                    <span class="edit"><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>&action=edit">Edit</a></span>
+                                    <span class="view"><a href="/?page_id=<?= $pid ?>">View</a></span>
+                                </div>
+                            </td>
+                            <td class="author column-author">admin</td>
+                            <td class="date column-date"><?= htmlspecialchars(date('Y-m-d', strtotime($p['post_date'] ?? ''))) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
         <?php elseif ($activeScreen === 'edit-comments'): ?>
 
+            <?php
+            $db = app(\Cycle\Database\DatabaseInterface::class);
+            $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
+            $comments = $db->select('*')->from($pfx . 'comments')->orderBy('comment_date', 'DESC')->fetchAll();
+            ?>
             <div id="post-body-content">
-                <div class="notice notice-info inline">
-                    <p>Comments moderation — data from <code>pw_comments</code> will render here.</p>
-                </div>
                 <table class="wp-list-table widefat fixed striped comments">
                     <thead><tr>
                         <td class="manage-column column-cb check-column"><input type="checkbox" /></td>
@@ -166,7 +220,19 @@
                         <th class="manage-column column-date">Submitted On</th>
                     </tr></thead>
                     <tbody id="the-list">
+                        <?php if (empty($comments)): ?>
                         <tr class="no-items"><td class="colspanchange" colspan="5">No comments found.</td></tr>
+                        <?php else: ?>
+                        <?php foreach ($comments as $c): $cid = $c['comment_ID'] ?? $c['id']; ?>
+                        <tr>
+                            <th class="check-column"><input type="checkbox" /></th>
+                            <td class="author column-author"><?= htmlspecialchars($c['comment_author'] ?? '') ?><br /><?= htmlspecialchars($c['comment_author_email'] ?? '') ?></td>
+                            <td class="comment column-comment"><?= htmlspecialchars(substr($c['comment_content'] ?? '', 0, 100)) ?></td>
+                            <td class="response column-response">Post #<?= (int) ($c['comment_post_ID'] ?? 0) ?></td>
+                            <td class="date column-date"><?= htmlspecialchars(date('Y-m-d', strtotime($c['comment_date'] ?? ''))) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -330,12 +396,15 @@
                 </div>
             </div>
 
+
         <?php elseif ($activeScreen === 'users'): ?>
 
+            <?php
+            $db = app(\Cycle\Database\DatabaseInterface::class);
+            $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
+            $users = $db->select('*')->from($pfx . 'users')->orderBy('user_registered', 'DESC')->fetchAll();
+            ?>
             <div id="post-body-content">
-                <div class="notice notice-info inline">
-                    <p>User management — data from <code>pw_users</code> will render here.</p>
-                </div>
                 <table class="wp-list-table widefat fixed striped users">
                     <thead><tr>
                         <td class="manage-column column-cb check-column"><input type="checkbox" /></td>
@@ -346,18 +415,35 @@
                         <th class="manage-column column-date">Registered</th>
                     </tr></thead>
                     <tbody id="the-list">
-                        <tr><td class="check-column"><input type="checkbox" /></td>
-                            <td class="username column-username"><strong>admin</strong></td>
-                            <td>Administrator</td>
-                            <td>admin@prestoworld.org</td>
-                            <td>Administrator</td>
-                            <td>—</td>
+                        <?php if (empty($users)): ?>
+                        <tr class="no-items"><td class="colspanchange" colspan="6">No users found.</td></tr>
+                        <?php else: ?>
+                        <?php foreach ($users as $u): $uid = $u['ID'] ?? $u['id']; ?>
+                        <tr>
+                            <th class="check-column"><input type="checkbox" /></th>
+                            <td class="username column-username"><strong><?= htmlspecialchars($u['user_login'] ?? '') ?></strong></td>
+                            <td class="name column-name"><?= htmlspecialchars($u['display_name'] ?? $u['user_nicename'] ?? '') ?></td>
+                            <td class="email column-email"><?= htmlspecialchars($u['user_email'] ?? '') ?></td>
+                            <td class="role column-role"><?php
+                            try {
+                                $caps = $db->select('meta_value')->from($pfx . 'usermeta')->where('user_id', $uid)->where('meta_key', 'wp_capabilities')->limit(1)->fetch();
+                                if ($caps) {
+                                    $unser = unserialize($caps['meta_value']);
+                                    if (is_array($unser)) echo htmlspecialchars(implode(', ', array_keys($unser)));
+                                    else echo 'subscriber';
+                                } else echo 'subscriber';
+                            } catch (\Throwable) { echo 'subscriber'; }
+                            ?></td>
+                            <td class="date column-date"><?= htmlspecialchars(date('Y-m-d', strtotime($u['user_registered'] ?? ''))) ?></td>
                         </tr>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
 
         <?php elseif ($activeScreen === 'profile'): ?>
+
 
             <div id="post-body-content">
                 <div class="notice notice-info inline">

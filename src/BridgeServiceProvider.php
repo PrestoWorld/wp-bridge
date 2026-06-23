@@ -27,6 +27,10 @@ class BridgeServiceProvider extends ServiceProvider
 
             $this->app->instance(WordPressConfig::class, $wpConfig);
 
+            // Switch to MySQL when WordPress config is present
+            putenv('DB_CONNECTION=mysql');
+            $_ENV['DB_CONNECTION'] = 'mysql';
+
             $prefix = $wpConfig['WP_TABLE_PREFIX'] ?? 'wp_';
             $this->app->instance('wp-bridge.table_prefix', $prefix);
             $this->app->instance('wp-bridge.wordpress_detected', true);
