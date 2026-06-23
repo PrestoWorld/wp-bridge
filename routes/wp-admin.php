@@ -7,6 +7,9 @@ declare(strict_types=1);
  * All routes are handled by the router — no actual wp-admin/*.php files.
  */
 
+use PrestoWorld\Bridge\WordPress\Admin\Controllers\WpAdminController;
+use App\Http\Controllers\Admin\AdminApiController;
+
 /** @var \App\Http\Routing\Contracts\RouterInterface $router */
 
 $router->get('/wp-admin', function () {
@@ -15,15 +18,66 @@ $router->get('/wp-admin', function () {
 });
 
 $router->group(['prefix' => '/wp-admin'], function () use ($router) {
-    $router->get('', \App\Http\Controllers\Admin\SpaController::class);
-    $router->get('/', \App\Http\Controllers\Admin\SpaController::class);
-    $router->get('/index.php', \App\Http\Controllers\Admin\SpaController::class);
-    $router->get('/admin.php', \App\Http\Controllers\Admin\SpaController::class);
-    $router->get('/edit.php', \App\Http\Controllers\Admin\SpaController::class);
-    $router->get('/plugins.php', \App\Http\Controllers\Admin\SpaController::class);
-    $router->get('/options-general.php', \App\Http\Controllers\Admin\SpaController::class);
-    $router->get('/themes.php', \App\Http\Controllers\Admin\SpaController::class);
-    $router->post('/themes.php', [\App\Http\Controllers\Admin\AdminApiController::class, 'activateThemeFromForm']);
-    $router->get('/admin-ajax.php', [\App\Http\Controllers\Admin\SpaController::class, 'adminAjax']);
-    $router->post('/admin-ajax.php', [\App\Http\Controllers\Admin\SpaController::class, 'adminAjax']);
+    // Dashboard
+    $router->get('', WpAdminController::class);
+    $router->get('/', WpAdminController::class);
+    $router->get('/index.php', WpAdminController::class);
+    $router->get('/admin.php', WpAdminController::class);
+
+    // Posts
+    $router->get('/edit.php', WpAdminController::class);
+    $router->get('/post-new.php', WpAdminController::class);
+    $router->get('/post.php', WpAdminController::class);
+
+    // Media
+    $router->get('/upload.php', WpAdminController::class);
+    $router->get('/media-new.php', WpAdminController::class);
+
+    // Pages
+    $router->get('/edit-pages.php', WpAdminController::class);
+
+    // Comments
+    $router->get('/edit-comments.php', WpAdminController::class);
+
+    // Appearance
+    $router->get('/themes.php', WpAdminController::class);
+    $router->post('/themes.php', [AdminApiController::class, 'activateThemeFromForm']);
+    $router->get('/widgets.php', WpAdminController::class);
+    $router->get('/nav-menus.php', WpAdminController::class);
+    $router->get('/customize.php', WpAdminController::class);
+    $router->get('/theme-editor.php', WpAdminController::class);
+
+    // Plugins
+    $router->get('/plugins.php', WpAdminController::class);
+    $router->get('/plugin-install.php', WpAdminController::class);
+    $router->get('/plugin-editor.php', WpAdminController::class);
+
+    // Users
+    $router->get('/users.php', WpAdminController::class);
+    $router->get('/user-new.php', WpAdminController::class);
+    $router->get('/user-edit.php', WpAdminController::class);
+    $router->get('/profile.php', WpAdminController::class);
+
+    // Tools
+    $router->get('/tools.php', WpAdminController::class);
+    $router->get('/import.php', WpAdminController::class);
+    $router->get('/export.php', WpAdminController::class);
+    $router->get('/site-health.php', WpAdminController::class);
+    $router->get('/site-health-info.php', WpAdminController::class);
+
+    // Settings
+    $router->get('/options-general.php', WpAdminController::class);
+    $router->get('/options-writing.php', WpAdminController::class);
+    $router->get('/options-reading.php', WpAdminController::class);
+    $router->get('/options-discussion.php', WpAdminController::class);
+    $router->get('/options-media.php', WpAdminController::class);
+    $router->get('/options-permalink.php', WpAdminController::class);
+    $router->get('/options-privacy.php', WpAdminController::class);
+
+    // Updates
+    $router->get('/update-core.php', WpAdminController::class);
+
+    // AJAX
+    $router->get('/admin-ajax.php', [WpAdminController::class, 'adminAjax']);
+    $router->post('/admin-ajax.php', [WpAdminController::class, 'adminAjax']);
 });

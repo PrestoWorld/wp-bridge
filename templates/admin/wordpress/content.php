@@ -66,30 +66,231 @@
                 </div>
                 <div class="tablenav top">
                     <div class="alignleft actions">
-                        <select name="cat" id="cat" class="postform">
-                            <option value="0">All categories</option>
-                        </select>
+                        <select name="cat" id="cat" class="postform"><option value="0">All categories</option></select>
                         <input type="submit" class="button" value="Filter" />
                     </div>
-                    <div class="tablenav-pages one-page">
-                        <span class="displaying-num">0 items</span>
-                    </div>
+                    <div class="tablenav-pages one-page"><span class="displaying-num">0 items</span></div>
                     <br class="clear" />
                 </div>
                 <table class="wp-list-table widefat fixed striped posts">
-                    <thead>
-                        <tr>
-                            <td id="cb" class="manage-column column-cb check-column"><label class="screen-reader-text" for="cb-select-all-1">Select All</label><input id="cb-select-all-1" type="checkbox" /></td>
-                            <th scope="col" id="title" class="manage-column column-title column-primary">Title</th>
-                            <th scope="col" id="author" class="manage-column column-author">Author</th>
-                            <th scope="col" id="categories" class="manage-column column-categories">Categories</th>
-                            <th scope="col" id="date" class="manage-column column-date">Date</th>
-                        </tr>
-                    </thead>
+                    <thead><tr>
+                        <td class="manage-column column-cb check-column"><input id="cb-select-all-1" type="checkbox" /></td>
+                        <th class="manage-column column-title column-primary">Title</th>
+                        <th class="manage-column column-author">Author</th>
+                        <th class="manage-column column-categories">Categories</th>
+                        <th class="manage-column column-date">Date</th>
+                    </tr></thead>
                     <tbody id="the-list">
                         <tr class="no-items"><td class="colspanchange" colspan="5">No posts found.</td></tr>
                     </tbody>
                 </table>
+            </div>
+
+        <?php elseif ($activeScreen === 'post-new'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Add New Post — data from <code>pw_posts</code> will save here.</p>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;">
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block;font-weight:600;margin-bottom:4px;">Title</label>
+                        <input type="text" style="width:100%;padding:8px;font-size:16px;border:1px solid #8c8f94;border-radius:4px;" placeholder="Add title" />
+                    </div>
+                    <div style="margin-bottom:16px;">
+                        <label style="display:block;font-weight:600;margin-bottom:4px;">Content</label>
+                        <textarea rows="12" style="width:100%;padding:8px;border:1px solid #8c8f94;border-radius:4px;font-family:monospace;"></textarea>
+                    </div>
+                    <p class="submit"><input type="submit" class="button button-primary" value="Publish" /></p>
+                </div>
+            </div>
+
+        <?php elseif ($activeScreen === 'upload'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Media Library — uploaded files will appear here via the API.</p>
+                </div>
+                <div class="tablenav top">
+                    <div class="alignleft actions">
+                        <select><option value="">All media items</option></select>
+                        <input type="submit" class="button" value="Filter" />
+                    </div>
+                    <br class="clear" />
+                </div>
+                <table class="wp-list-table widefat fixed striped media">
+                    <thead><tr>
+                        <td class="manage-column column-cb check-column"><input type="checkbox" /></td>
+                        <th class="manage-column column-icon">File</th>
+                        <th class="manage-column column-title column-primary">Title</th>
+                        <th class="manage-column column-author">Author</th>
+                        <th class="manage-column column-date">Date</th>
+                    </tr></thead>
+                    <tbody id="the-list">
+                        <tr class="no-items"><td class="colspanchange" colspan="5">No media items found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        <?php elseif ($activeScreen === 'edit-pages'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Pages management — data from <code>pw_posts</code> will render here.</p>
+                </div>
+                <table class="wp-list-table widefat fixed striped pages">
+                    <thead><tr>
+                        <td class="manage-column column-cb check-column"><input type="checkbox" /></td>
+                        <th class="manage-column column-title column-primary">Title</th>
+                        <th class="manage-column column-author">Author</th>
+                        <th class="manage-column column-date">Date</th>
+                    </tr></thead>
+                    <tbody id="the-list">
+                        <tr class="no-items"><td class="colspanchange" colspan="4">No pages found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        <?php elseif ($activeScreen === 'edit-comments'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Comments moderation — data from <code>pw_comments</code> will render here.</p>
+                </div>
+                <table class="wp-list-table widefat fixed striped comments">
+                    <thead><tr>
+                        <td class="manage-column column-cb check-column"><input type="checkbox" /></td>
+                        <th class="manage-column column-author column-primary">Author</th>
+                        <th class="manage-column column-comment">Comment</th>
+                        <th class="manage-column column-response">In Response To</th>
+                        <th class="manage-column column-date">Submitted On</th>
+                    </tr></thead>
+                    <tbody id="the-list">
+                        <tr class="no-items"><td class="colspanchange" colspan="5">No comments found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        <?php elseif ($activeScreen === 'themes'): ?>
+
+            <div id="post-body-content">
+                <?php
+                try {
+                    $themesDir = getenv('PW_CONTENT_DIR')
+                        ? getenv('PW_CONTENT_DIR') . '/themes'
+                        : null;
+                    $repo = new \PrestoWorld\Theme\ThemeRepository($themesDir);
+                    $themes = $repo->getAll();
+                    $activeTheme = $repo->getActive();
+                } catch (\Throwable $e) {
+                    $themes = [];
+                    $activeTheme = null;
+                }
+                ?>
+                <div class="notice notice-info inline">
+                    <p>Manage themes for your site. The active theme is highlighted.</p>
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:24px;margin-top:16px;">
+                    <?php foreach ($themes as $theme):
+                        $isActive = ($theme['directory'] ?? '') === $activeTheme;
+                        $screenshot = $theme['screenshot'] ?? null;
+                    ?>
+                    <div style="width:300px;background:#fff;border:<?= $isActive ? '2px solid #2271b1' : '1px solid #dcdcde' ?>;border-radius:4px;overflow:hidden;position:relative;">
+                        <?php if ($isActive): ?>
+                        <div style="position:absolute;top:8px;left:8px;background:#2271b1;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;z-index:1;">Active</div>
+                        <?php endif; ?>
+                        <div style="background:#f0f0f1;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;">
+                            <?php if ($screenshot): ?>
+                            <img src="<?= htmlspecialchars($screenshot) ?>" alt="<?= htmlspecialchars($theme['name'] ?? '') ?>" style="width:100%;height:100%;object-fit:cover;" loading="lazy" />
+                            <?php else: ?>
+                            <span style="color:#c3c4c7;font-size:32px;">--</span>
+                            <?php endif; ?>
+                        </div>
+                        <div style="padding:12px 16px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px;">
+                                <h3 style="margin:0;font-size:14px;font-weight:600;"><?= htmlspecialchars($theme['name'] ?? '') ?></h3>
+                                <?php if (!empty($theme['version'])): ?>
+                                <span style="font-size:10px;color:#787c82;font-family:monospace;">v<?= htmlspecialchars($theme['version']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <?php if (!empty($theme['author'])): ?>
+                            <p style="margin:0 0 6px;font-size:12px;color:#646970;">By <?= htmlspecialchars($theme['author']) ?></p>
+                            <?php endif; ?>
+                            <?php if (!empty($theme['description'])): ?>
+                            <p style="margin:0 0 8px;font-size:12px;color:#50575e;line-height:1.4;"><?= htmlspecialchars($theme['description']) ?></p>
+                            <?php endif; ?>
+                            <?php if (!$isActive): ?>
+                            <form method="post" action="" style="margin-top:8px;padding-top:8px;border-top:1px solid #f0f0f1;">
+                                <input type="hidden" name="action" value="activate-theme" />
+                                <input type="hidden" name="theme" value="<?= htmlspecialchars($theme['directory'] ?? '') ?>" />
+                                <button type="submit" class="button button-primary" style="font-size:12px;padding:4px 16px;">Activate</button>
+                            </form>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+                <?php if (empty($themes)): ?>
+                <p style="color:#787c82;font-size:13px;margin-top:16px;">No themes installed.</p>
+                <?php endif; ?>
+            </div>
+
+        <?php elseif ($activeScreen === 'widgets'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Widget management — drag and drop widgets into sidebars. Widget data will be stored via the API.</p>
+                </div>
+                <div style="display:flex;gap:24px;">
+                    <div style="flex:1;">
+                        <h2 style="font-size:14px;font-weight:600;">Available Widgets</h2>
+                        <div style="background:#fff;border:1px solid #dcdcde;padding:12px;">
+                            <div style="padding:8px;background:#f6f7f7;border:1px solid #dcdcde;margin-bottom:8px;cursor:move;">Recent Posts</div>
+                            <div style="padding:8px;background:#f6f7f7;border:1px solid #dcdcde;margin-bottom:8px;cursor:move;">Recent Comments</div>
+                            <div style="padding:8px;background:#f6f7f7;border:1px solid #dcdcde;margin-bottom:8px;cursor:move;">Search</div>
+                            <div style="padding:8px;background:#f6f7f7;border:1px solid #dcdcde;margin-bottom:8px;cursor:move;">Archives</div>
+                            <div style="padding:8px;background:#f6f7f7;border:1px solid #dcdcde;cursor:move;">Meta</div>
+                        </div>
+                    </div>
+                    <div style="flex:1;">
+                        <h2 style="font-size:14px;font-weight:600;">Sidebar</h2>
+                        <div style="background:#fff;border:1px solid #dcdcde;min-height:200px;padding:12px;">
+                            <p style="color:#787c82;">No widgets assigned yet.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <?php elseif ($activeScreen === 'nav-menus'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Menu management — create and manage navigation menus. Menu data will be stored via the API.</p>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;">
+                    <div style="display:flex;gap:24px;">
+                        <div style="flex:1;">
+                            <h2 style="font-size:14px;font-weight:600;">Menu Structure</h2>
+                            <div style="border:1px solid #dcdcde;min-height:200px;padding:12px;background:#f6f7f7;">
+                                <p style="color:#787c82;">No menu items yet. Add pages, posts, or custom links.</p>
+                            </div>
+                        </div>
+                        <div style="width:280px;">
+                            <h2 style="font-size:14px;font-weight:600;">Add Menu Items</h2>
+                            <div style="border:1px solid #dcdcde;padding:12px;margin-bottom:8px;background:#fff;">
+                                <label style="font-weight:600;font-size:12px;">Pages</label>
+                                <div style="margin-top:4px;"><button class="button">View All</button></div>
+                            </div>
+                            <div style="border:1px solid #dcdcde;padding:12px;background:#fff;">
+                                <label style="font-weight:600;font-size:12px;">Custom Links</label>
+                                <div style="margin-top:4px;">
+                                    <input type="text" placeholder="URL" style="width:100%;margin-bottom:4px;" />
+                                    <input type="text" placeholder="Link Text" style="width:100%;" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         <?php elseif ($activeScreen === 'plugins'): ?>
@@ -99,37 +300,336 @@
                     <p>Plugin management is available through the API. Data from <code>plugin_registry</code> will render here.</p>
                 </div>
                 <table class="wp-list-table widefat fixed striped plugins">
-                    <thead>
-                        <tr>
-                            <td id="cb" class="manage-column column-cb check-column"><input id="cb-select-all-1" type="checkbox" /></td>
-                            <th scope="col" id="name" class="manage-column column-name column-primary">Plugin</th>
-                            <th scope="col" id="description" class="manage-column column-description">Description</th>
-                            <th scope="col" id="status" class="manage-column column-status">Status</th>
-                            <th scope="col" id="version" class="manage-column column-version">Version</th>
-                        </tr>
-                    </thead>
+                    <thead><tr>
+                        <td class="manage-column column-cb check-column"><input id="cb-select-all-1" type="checkbox" /></td>
+                        <th class="manage-column column-name column-primary">Plugin</th>
+                        <th class="manage-column column-description">Description</th>
+                        <th class="manage-column column-status">Status</th>
+                        <th class="manage-column column-version">Version</th>
+                    </tr></thead>
                     <tbody id="the-list">
                         <tr class="no-items"><td class="colspanchange" colspan="5">No plugins installed.</td></tr>
                     </tbody>
                 </table>
             </div>
 
-        <?php elseif ($activeScreen === 'settings'): ?>
+        <?php elseif ($activeScreen === 'plugin-install'): ?>
 
             <div id="post-body-content">
-                <form action="" method="post">
-                    <table class="form-table" role="presentation">
-                        <tr>
-                            <th scope="row"><label for="site-title">Site Title</label></th>
-                            <td><input name="site-title" type="text" id="site-title" value="PrestoWorld" class="regular-text" /></td>
+                <div class="notice notice-info inline">
+                    <p>Install plugins from the WordPress.org repository or upload a .zip file.</p>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;">
+                    <input type="search" placeholder="Search plugins..." style="width:60%;padding:8px;border:1px solid #8c8f94;border-radius:4px;" />
+                    <input type="submit" class="button" value="Search" style="margin-left:4px;" />
+                </div>
+                <div style="margin-top:16px;background:#fff;border:1px solid #dcdcde;padding:20px;">
+                    <h2 style="font-size:14px;font-weight:600;margin:0 0 8px;">Or upload a .zip file</h2>
+                    <input type="file" accept=".zip" />
+                    <input type="submit" class="button" value="Install Now" style="margin-left:4px;" />
+                </div>
+            </div>
+
+        <?php elseif ($activeScreen === 'users'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>User management — data from <code>pw_users</code> will render here.</p>
+                </div>
+                <table class="wp-list-table widefat fixed striped users">
+                    <thead><tr>
+                        <td class="manage-column column-cb check-column"><input type="checkbox" /></td>
+                        <th class="manage-column column-username column-primary">Username</th>
+                        <th class="manage-column column-name">Name</th>
+                        <th class="manage-column column-email">Email</th>
+                        <th class="manage-column column-role">Role</th>
+                        <th class="manage-column column-date">Registered</th>
+                    </tr></thead>
+                    <tbody id="the-list">
+                        <tr><td class="check-column"><input type="checkbox" /></td>
+                            <td class="username column-username"><strong>admin</strong></td>
+                            <td>Administrator</td>
+                            <td>admin@prestoworld.org</td>
+                            <td>Administrator</td>
+                            <td>—</td>
                         </tr>
-                        <tr>
-                            <th scope="row"><label for="site-tagline">Tagline</label></th>
-                            <td><input name="site-tagline" type="text" id="site-tagline" value="Digital marketplace platform" class="regular-text" /></td>
+                    </tbody>
+                </table>
+            </div>
+
+        <?php elseif ($activeScreen === 'profile'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Edit your profile — data from <code>pw_users</code> will save here.</p>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;">
+                    <table class="form-table" role="presentation">
+                        <tr><th scope="row"><label>Username</label></th><td><strong>admin</strong></td></tr>
+                        <tr><th scope="row"><label for="email">Email</label></th><td><input name="email" type="email" id="email" value="admin@prestoworld.org" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label for="first_name">First Name</label></th><td><input name="first_name" type="text" id="first_name" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label for="last_name">Last Name</label></th><td><input name="last_name" type="text" id="last_name" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label for="display_name">Display Name</label></th><td><input name="display_name" type="text" id="display_name" value="Administrator" class="regular-text" /></td></tr>
+                    </table>
+                    <p class="submit"><input type="submit" class="button button-primary" value="Update Profile" /></p>
+                </div>
+            </div>
+
+        <?php elseif ($activeScreen === 'tools'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Available Tools — various tools for managing your site.</p>
+                </div>
+                <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                    <div style="flex:1;min-width:250px;background:#fff;border:1px solid #dcdcde;padding:16px;">
+                        <h2 style="font-size:14px;font-weight:600;margin:0 0 8px;">Import</h2>
+                        <p style="font-size:12px;color:#50575e;">Import content from other systems.</p>
+                        <a href="/wp-admin/import.php" class="button">Import</a>
+                    </div>
+                    <div style="flex:1;min-width:250px;background:#fff;border:1px solid #dcdcde;padding:16px;">
+                        <h2 style="font-size:14px;font-weight:600;margin:0 0 8px;">Export</h2>
+                        <p style="font-size:12px;color:#50575e;">Export your content as XML.</p>
+                        <a href="/wp-admin/export.php" class="button">Export</a>
+                    </div>
+                    <div style="flex:1;min-width:250px;background:#fff;border:1px solid #dcdcde;padding:16px;">
+                        <h2 style="font-size:14px;font-weight:600;margin:0 0 8px;">Site Health</h2>
+                        <p style="font-size:12px;color:#50575e;">Check the health of your site.</p>
+                        <a href="/wp-admin/site-health.php" class="button">View</a>
+                    </div>
+                </div>
+            </div>
+
+        <?php elseif ($activeScreen === 'import'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Import content from WordPress, Blogger, Tumblr, or other sources.</p>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;">
+                    <table class="form-table">
+                        <tr><th>WordPress</th><td>Import posts, pages, comments, and more from a WordPress export file.<br /><button class="button">Install Importer</button></td></tr>
+                        <tr><th>Blogger</th><td>Import posts and comments from Blogger.<br /><button class="button">Install Importer</button></td></tr>
+                        <tr><th>RSS</th><td>Import posts from an RSS feed.<br /><button class="button">Install Importer</button></td></tr>
+                    </table>
+                </div>
+            </div>
+
+        <?php elseif ($activeScreen === 'export'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Export your content as a WordPress eXtended RSS (WXR) XML file.</p>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;">
+                    <fieldset style="border:none;padding:0;">
+                        <legend style="font-weight:600;margin-bottom:8px;">Choose what to export:</legend>
+                        <label style="display:block;margin-bottom:4px;"><input type="radio" name="content" checked /> All content</label>
+                        <label style="display:block;margin-bottom:4px;"><input type="radio" name="content" /> Posts</label>
+                        <label style="display:block;margin-bottom:4px;"><input type="radio" name="content" /> Pages</label>
+                        <label style="display:block;margin-bottom:4px;"><input type="radio" name="content" /> Media</label>
+                    </fieldset>
+                    <p class="submit"><input type="submit" class="button button-primary" value="Download Export File" /></p>
+                </div>
+            </div>
+
+        <?php elseif ($activeScreen === 'site-health'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>Site Health checks the overall health of your WordPress installation.</p>
+                </div>
+                <div style="display:flex;gap:24px;">
+                    <div style="flex:1;background:#fff;border:1px solid #dcdcde;padding:20px;">
+                        <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;">Status</h2>
+                        <div style="display:flex;align-items:center;gap:12px;">
+                            <div style="width:80px;height:80px;border-radius:50%;background:#f0f0f1;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#787c82;">—</div>
+                            <div>
+                                <p style="margin:0;font-weight:600;">Site health not yet tested</p>
+                                <p style="margin:4px 0 0;font-size:12px;color:#787c82;">Run the health check to see recommendations.</p>
+                            </div>
+                        </div>
+                        <p class="submit" style="margin-top:16px;"><button class="button button-primary">Run Site Health Check</button></p>
+                    </div>
+                    <div style="width:300px;background:#fff;border:1px solid #dcdcde;padding:20px;">
+                        <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;">Info</h2>
+                        <a href="/wp-admin/site-health-info.php" class="button" style="width:100%;text-align:center;">View Site Info</a>
+                    </div>
+                </div>
+            </div>
+
+        <?php elseif (in_array($activeScreen, ['settings', 'options-writing', 'options-reading', 'options-discussion', 'options-media', 'options-permalink', 'options-privacy'], true)): ?>
+
+            <?php
+            $settingTabs = [
+                'settings'          => ['General', 'options-general.php'],
+                'options-writing'   => ['Writing', 'options-writing.php'],
+                'options-reading'   => ['Reading', 'options-reading.php'],
+                'options-discussion'=> ['Discussion', 'options-discussion.php'],
+                'options-media'     => ['Media', 'options-media.php'],
+                'options-permalink' => ['Permalinks', 'options-permalink.php'],
+                'options-privacy'   => ['Privacy', 'options-privacy.php'],
+            ];
+            ?>
+            <div id="post-body-content">
+                <nav style="margin-bottom:16px;border-bottom:1px solid #dcdcde;display:flex;gap:0;">
+                    <?php foreach ($settingTabs as $id => [$label, $url]): ?>
+                    <a href="/wp-admin/<?= $url ?>"
+                       style="display:inline-block;padding:8px 16px;text-decoration:none;font-size:13px;<?= $id === $activeScreen ? 'background:#fff;border:1px solid #dcdcde;border-bottom:1px solid #fff;margin-bottom:-1px;color:#2271b1;font-weight:600;' : 'color:#50575e;' ?>">
+                        <?= $label ?>
+                    </a>
+                    <?php endforeach; ?>
+                </nav>
+
+                <?php if ($activeScreen === 'settings'): ?>
+                <form action="" method="post">
+                    <table class="form-table">
+                        <tr><th scope="row"><label>Site Title</label></th><td><input name="site-title" type="text" value="PrestoWorld" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label>Tagline</label></th><td><input name="site-tagline" type="text" value="Digital marketplace platform" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label>WordPress Address (URL)</label></th><td><input name="siteurl" type="url" value="https://prestoworld.org" class="regular-text code" /></td></tr>
+                        <tr><th scope="row"><label>Site Address (URL)</label></th><td><input name="home" type="url" value="https://prestoworld.org" class="regular-text code" /></td></tr>
+                        <tr><th scope="row"><label>Administration Email Address</label></th><td><input name="admin_email" type="email" value="admin@prestoworld.org" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label>Membership</label></th><td><label><input type="checkbox" /> Anyone can register</label></td></tr>
+                        <tr><th scope="row"><label>New User Default Role</label></th><td><select><option>Subscriber</option><option>Contributor</option><option>Author</option><option>Editor</option><option>Administrator</option></select></td></tr>
+                        <tr><th scope="row"><label>Site Language</label></th><td><select><option>English (United States)</option></select></td></tr>
+                        <tr><th scope="row"><label>Timezone</label></th><td><select><option>UTC</option></select></td></tr>
+                        <tr><th scope="row"><label>Date Format</label></th><td><select><option>F j, Y</option></select></td></tr>
+                        <tr><th scope="row"><label>Time Format</label></th><td><select><option>g:i a</option></select></td></tr>
+                        <tr><th scope="row"><label>Week Starts On</label></th><td><select><option>Monday</option></select></td></tr>
+                    </table>
+                    <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
+                </form>
+
+                <?php elseif ($activeScreen === 'options-writing'): ?>
+                <form action="" method="post">
+                    <table class="form-table">
+                        <tr><th scope="row"><label>Default Post Category</label></th><td><select><option>Uncategorized</option></select></td></tr>
+                        <tr><th scope="row"><label>Default Post Format</label></th><td><select><option>Standard</option></select></td></tr>
+                        <tr><th scope="row"><label>Post via email</label></th><td><p style="color:#787c82;">Configure a secret email address to post by email.</p></td></tr>
+                        <tr><th scope="row"><label>Remote Publishing</label></th><td><label><input type="checkbox" /> Enable the XML-RPC publishing protocol.</label></td></tr>
+                    </table>
+                    <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
+                </form>
+
+                <?php elseif ($activeScreen === 'options-reading'): ?>
+                <form action="" method="post">
+                    <table class="form-table">
+                        <tr><th scope="row"><label>Your homepage displays</label></th>
+                            <td>
+                                <label><input type="radio" name="show_on_front" checked /> Your latest posts</label><br />
+                                <label><input type="radio" name="show_on_front" /> A static page</label>
+                            </td>
+                        </tr>
+                        <tr><th scope="row"><label>Blog pages show at most</label></th><td><input type="number" value="10" class="small-text" /> posts</td></tr>
+                        <tr><th scope="row"><label>Syndication feeds show the most recent</label></th><td><input type="number" value="10" class="small-text" /> items</td></tr>
+                        <tr><th scope="row"><label>For each post in a feed, show</label></th>
+                            <td><label><input type="radio" name="rss_use_excerpt" checked /> Full text</label><br />
+                                <label><input type="radio" name="rss_use_excerpt" /> Summary</label></td>
+                        </tr>
+                        <tr><th scope="row"><label>Search Engine Visibility</label></th>
+                            <td><label><input type="checkbox" /> Discourage search engines from indexing this site</label></td>
                         </tr>
                     </table>
                     <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
                 </form>
+
+                <?php elseif ($activeScreen === 'options-discussion'): ?>
+                <form action="" method="post">
+                    <table class="form-table">
+                        <tr><th scope="row">Default post settings</th>
+                            <td><label><input type="checkbox" checked /> Attempt to notify any blogs linked to from the post</label><br />
+                                <label><input type="checkbox" checked /> Allow link notifications from other blogs (pingbacks and trackbacks)</label></td>
+                        </tr>
+                        <tr><th scope="row"><label>Allow people to post comments on new articles</label></th>
+                            <td><label><input type="checkbox" checked /> Allow people to submit comments on new posts</label></td>
+                        </tr>
+                        <tr><th scope="row"><label>Comment must be manually approved</label></th>
+                            <td><label><input type="checkbox" /> Comment author must have a previously approved comment</label></td>
+                        </tr>
+                        <tr><th scope="row"><label>Comment moderation</label></th>
+                            <td><textarea rows="4" class="large-text code" placeholder="Hold a comment in the queue if it contains X links. Separate words with commas."></textarea></td>
+                        </tr>
+                        <tr><th scope="row"><label>Avatars</label></th>
+                            <td><label><input type="checkbox" checked /> Show avatars</label><br />
+                                <select><option>Mystery Person</option></select></td>
+                        </tr>
+                    </table>
+                    <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
+                </form>
+
+                <?php elseif ($activeScreen === 'options-media'): ?>
+                <form action="" method="post">
+                    <table class="form-table">
+                        <tr><th scope="row"><label>Thumbnail size</label></th>
+                            <td>Width: <input type="number" value="150" class="small-text" /> Height: <input type="number" value="150" class="small-text" /><br />
+                                <label><input type="checkbox" checked /> Crop thumbnail to exact dimensions</label></td>
+                        </tr>
+                        <tr><th scope="row"><label>Medium size</label></th>
+                            <td>Max Width: <input type="number" value="300" class="small-text" /> Max Height: <input type="number" value="300" class="small-text" /></td>
+                        </tr>
+                        <tr><th scope="row"><label>Large size</label></th>
+                            <td>Max Width: <input type="number" value="1024" class="small-text" /> Max Height: <input type="number" value="1024" class="small-text" /></td>
+                        </tr>
+                        <tr><th scope="row"><label>Uploading Files</label></th>
+                            <td><label><input type="checkbox" /> Organize my uploads into month- and year-based folders</label></td>
+                        </tr>
+                    </table>
+                    <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
+                </form>
+
+                <?php elseif ($activeScreen === 'options-permalink'): ?>
+                <form action="" method="post">
+                    <table class="form-table">
+                        <tr><th scope="row"><label>Common Settings</label></th>
+                            <td>
+                                <label><input type="radio" name="permalink_structure" /> Plain</label><br />
+                                <label><input type="radio" name="permalink_structure" /> Day and name</label><br />
+                                <label><input type="radio" name="permalink_structure" checked /> Post name</label><br />
+                                <label><input type="radio" name="permalink_structure" /> Custom Structure</label><br />
+                                <input type="text" value="/%postname%/" class="regular-text code" style="margin-top:4px;" />
+                            </td>
+                        </tr>
+                        <tr><th scope="row"><label>Optional</label></th>
+                            <td><input type="text" class="regular-text code" placeholder="category" /> Category base<br />
+                                <input type="text" class="regular-text code" placeholder="tags" style="margin-top:4px;" /> Tag base</td>
+                        </tr>
+                    </table>
+                    <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
+                </form>
+
+                <?php elseif ($activeScreen === 'options-privacy'): ?>
+                <form action="" method="post">
+                    <div class="notice notice-info inline"><p>Manage your privacy settings and create a privacy policy page.</p></div>
+                    <table class="form-table">
+                        <tr><th scope="row"><label>Privacy Policy Page</label></th>
+                            <td><select><option>— Select —</option></select>
+                                <p style="font-size:12px;color:#787c82;">Select a page to use as your privacy policy.</p></td>
+                        </tr>
+                    </table>
+                    <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
+                </form>
+                <?php endif; ?>
+            </div>
+
+        <?php elseif ($activeScreen === 'update-core'): ?>
+
+            <div id="post-body-content">
+                <div class="notice notice-info inline">
+                    <p>WordPress Updates — check for updates to WordPress core, plugins, and themes.</p>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;">
+                    <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;">WordPress Updates</h2>
+                    <p>You are running <strong>PrestoWorld</strong>. No updates available at this time.</p>
+                    <button class="button">Check Again</button>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;margin-top:16px;">
+                    <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;">Plugins</h2>
+                    <p>No plugin updates available.</p>
+                </div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;margin-top:16px;">
+                    <h2 style="font-size:14px;font-weight:600;margin:0 0 12px;">Themes</h2>
+                    <p>No theme updates available.</p>
+                </div>
             </div>
 
         <?php else: ?>

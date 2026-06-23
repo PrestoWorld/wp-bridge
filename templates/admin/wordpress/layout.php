@@ -12,6 +12,46 @@
  * @var array  $page
  * @var string $content
  */
+
+// Extended screen URL map — overrides WordPressSkin::SCREEN_URLS
+$__screenUrlMap = [
+    'dashboard' => 'index.php',
+    'posts'     => 'edit.php',
+    'post-new'  => 'post-new.php',
+    'post'      => 'post.php',
+    'upload'    => 'upload.php',
+    'media-new' => 'media-new.php',
+    'edit-pages' => 'edit-pages.php',
+    'edit-comments' => 'edit-comments.php',
+    'themes'    => 'themes.php',
+    'customize' => 'customize.php',
+    'widgets'   => 'widgets.php',
+    'nav-menus' => 'nav-menus.php',
+    'theme-editor' => 'theme-editor.php',
+    'plugins'   => 'plugins.php',
+    'plugin-install' => 'plugin-install.php',
+    'plugin-editor' => 'plugin-editor.php',
+    'users'     => 'users.php',
+    'user-new'  => 'user-new.php',
+    'user-edit' => 'user-edit.php',
+    'profile'   => 'profile.php',
+    'tools'     => 'tools.php',
+    'import'    => 'import.php',
+    'export'    => 'export.php',
+    'site-health' => 'site-health.php',
+    'site-health-info' => 'site-health-info.php',
+    'settings'  => 'options-general.php',
+    'options-writing' => 'options-writing.php',
+    'options-reading' => 'options-reading.php',
+    'options-discussion' => 'options-discussion.php',
+    'options-media' => 'options-media.php',
+    'options-permalink' => 'options-permalink.php',
+    'options-privacy' => 'options-privacy.php',
+    'update-core' => 'update-core.php',
+];
+$__screenUrl = function (string $screenId) use ($__screenUrlMap): string {
+    return $__screenUrlMap[$screenId] ?? \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::screenUrl($screenId);
+};
 ?><!DOCTYPE html>
 <html lang="en-US">
 <head>
@@ -86,6 +126,7 @@
             display: flex; align-items: center; gap: 6px;
             padding: 6px 12px; color: #c3c4c7; text-decoration: none;
             font-size: 13px; line-height: 1.4; min-height: 34px;
+            position: relative;
         }
         #adminmenu .menu-top > a:hover { color: #72aee6; }
         #adminmenu .menu-top.wp-has-current-submenu > a { color: #fff; background: #2c3338; }
@@ -100,19 +141,42 @@
         #adminmenu .menu-top.wp-has-current-submenu .wp-menu-icon-placeholder { background: #72aee6; }
         #adminmenu .wp-menu-name { padding: 0; }
 
-        /* Submenu */
+        /* Submenu — hidden by default, shown on hover or when parent is active */
         #adminmenu .wp-submenu {
-            display: none; list-style: none; margin: 0; padding: 0;
+            display: none; list-style: none; margin: 0; padding: 4px 0 8px;
             background: #2c3338; font-size: 13px;
+            border-radius: 0 0 4px 4px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
         }
         #adminmenu .wp-has-current-submenu .wp-submenu { display: block; }
+        #adminmenu li.menu-top:hover .wp-submenu { display: block; }
         #adminmenu .wp-submenu-head { display: none; }
-        #adminmenu .wp-submenu li { border: none; }
+        #adminmenu .wp-submenu li { border: none; margin: 0; }
         #adminmenu .wp-submenu a {
-            display: block; padding: 4px 12px 4px 26px; color: #c3c4c7; text-decoration: none; font-size: 13px;
+            display: block; padding: 5px 12px 5px 28px; color: #9ca2a7; text-decoration: none;
+            font-size: 13px; line-height: 1.5; transition: color 0.1s;
+            border-left: 2px solid transparent;
         }
-        #adminmenu .wp-submenu a:hover { color: #72aee6; }
-        #adminmenu .wp-submenu li.current a { color: #fff; font-weight: 600; }
+        #adminmenu .wp-submenu a:hover {
+            color: #72aee6; border-left-color: #72aee6;
+            background: rgba(114, 174, 230, 0.04);
+        }
+        #adminmenu .wp-submenu li.current a {
+            color: #fff; font-weight: 600;
+            border-left-color: #72aee6;
+            background: rgba(255,255,255,0.03);
+        }
+
+        /* Submenu arrow indicator */
+        #adminmenu .wp-submenu-arrow {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            font-size: 10px; color: #5c636a; transition: transform 0.15s, color 0.15s;
+            line-height: 1;
+        }
+        #adminmenu .wp-has-current-submenu .wp-submenu-arrow { color: #72aee6; }
+        #adminmenu li.menu-top:hover .wp-submenu-arrow { color: #c3c4c7; }
+        #adminmenu .wp-has-current-submenu .wp-submenu-arrow,
+        #adminmenu li.menu-top:hover .wp-submenu-arrow { transform: translateY(-50%) rotate(180deg); }
 
         /* ── Content Area ───────────────────────────────── */
         #wpcontent { flex: 1; margin-left: 0; min-width: 0; position: relative; }
@@ -249,23 +313,52 @@ $currentScreenTitle = $screenMap[$activeScreen] ?? 'Dashboard';
                 $sectionItems = $section['items'] ?? [];
                 if (empty($sectionItems)) continue;
 
-                foreach ($sectionItems as $i => $item):
-                    $screenId = $item['screenId'] ?? '';
-                    $isActive = $screenId === $activeScreen;
-                    ?>
-                    <?php if ($sectionIndex > 0 && $i === 0): ?>
-                    <li class="wp-menu-separator" role="presentation"><div class="separator"></div></li>
+                $firstItem = $sectionItems[0];
+                $sectionScreenId = $section['screenId'] ?? $firstItem['screenId'] ?? '';
+                $sectionIcon = $section['icon'] ?? $firstItem['icon'] ?? 'Circle';
+                $sectionLabel = $section['title'] ?: $firstItem['label'] ?? '';
+                $sectionHasChildren = count($sectionItems) > 1;
+
+                $anyChildActive = false;
+                foreach ($sectionItems as $item) {
+                    if (($item['screenId'] ?? '') === $activeScreen) {
+                        $anyChildActive = true;
+                        break;
+                    }
+                }
+
+                if ($sectionIndex > 0): ?>
+                <li class="wp-menu-separator" role="presentation"><div class="separator"></div></li>
+                <?php endif; ?>
+                <li class="menu-top menu-icon-<?= htmlspecialchars($sectionScreenId) ?> <?= $anyChildActive ? 'wp-has-current-submenu wp-menu-open' : '' ?>">
+                    <a href="<?= htmlspecialchars($__screenUrl($sectionScreenId)) ?>"
+                       class="<?= $anyChildActive ? 'wp-has-current-submenu wp-menu-open menu-top' : 'wp-not-current-submenu menu-top' ?>">
+                        <div class="wp-menu-image" data-icon="<?= htmlspecialchars($sectionIcon) ?>">
+                            <span class="wp-menu-icon-placeholder"></span>
+                        </div>
+                        <div class="wp-menu-name"><?= htmlspecialchars($sectionLabel) ?></div>
+                        <?php if ($sectionHasChildren): ?>
+                        <div class="wp-submenu-arrow" aria-hidden="true">&#9662;</div>
+                        <?php endif; ?>
+                    </a>
+                    <?php if ($sectionHasChildren): ?>
+                    <ul class="wp-submenu wp-submenu-wrap">
+                        <?php foreach ($sectionItems as $i => $item):
+                            $childScreenId = $item['screenId'] ?? '';
+                            $isChildActive = $childScreenId === $activeScreen;
+                        ?>
+                        <li class="<?= $isChildActive ? 'current' : '' ?>">
+                            <a href="<?= htmlspecialchars($__screenUrl($childScreenId)) ?>"
+                               class="<?= $isChildActive ? 'current' : '' ?>"
+                               aria-current="<?= $isChildActive ? 'page' : 'false' ?>">
+                                <?= htmlspecialchars($item['label'] ?? '') ?>
+                            </a>
+                        </li>
+                        <?php endforeach; ?>
+                    </ul>
                     <?php endif; ?>
-                    <li class="menu-top menu-icon-<?= htmlspecialchars($screenId) ?> <?= $isActive ? 'wp-has-current-submenu wp-menu-open' : '' ?>">
-                        <a href="<?= \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::screenUrl($screenId) ?>"
-                           class="<?= $isActive ? 'wp-has-current-submenu wp-menu-open menu-top' : 'wp-not-current-submenu menu-top' ?>">
-                            <div class="wp-menu-image" data-icon="<?= htmlspecialchars($item['icon'] ?? '') ?>">
-                                <span class="wp-menu-icon-placeholder"></span>
-                            </div>
-                            <div class="wp-menu-name"><?= htmlspecialchars($item['label'] ?? '') ?></div>
-                        </a>
-                    </li>
-                <?php endforeach;
+                </li>
+            <?php
                 $sectionIndex++;
             endforeach;
             ?>
@@ -315,7 +408,6 @@ $currentScreenTitle = $screenMap[$activeScreen] ?? 'Dashboard';
                     <?php else: ?>
                         <div class="presto-content-area">
                             <?php
-                            // content.php is included directly via PhpEngine
                             $__contentPath = __DIR__ . '/content.php';
                             if (file_exists($__contentPath)) {
                                 include $__contentPath;
