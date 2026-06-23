@@ -140,14 +140,110 @@
 
         <?php elseif ($activeScreen === 'upload'): ?>
 
+            <?php
+            $db = app(\Cycle\Database\DatabaseInterface::class);
+            $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
+            $basePath = getcwd();
+            $contentDir = getenv('PW_CONTENT_DIR') ?: ($basePath . '/public/wp-content');
+
+            try {
+                $mediaRows = $db->select('*')
+                    ->from($pfx . 'posts')
+                    ->where('post_type', 'attachment')
+                    ->where('post_status', '!=', 'auto-draft')
+                    ->orderBy('post_date', 'DESC')
+                    ->limit(50)
+                    ->fetchAll();
+            } catch (\Throwable) {
+                $mediaRows = [];
+            }
+
+            $mediaItems = [];
+            foreach ($mediaRows as $row) {
+                $id = (int) ($row['ID'] ?? $row['id']);
+                $attachedFile = null;
+                try {
+                    $m = $db->select('meta_value')->from($pfx . 'postmeta')
+                        ->where('post_id', $id)->where('meta_key', '_wp_attached_file')->limit(1)->fetch();
+                    $attachedFile = $m['meta_value'] ?? null;
+                } catch (\Throwable) {}
+
+                $subPath = $attachedFile ?? '';
+                $fileName = basename($subPath ?: '');
+                $mime = $row['post_mime_type'] ?? '';
+
+                $localUrl = '';
+                $isImage = str_starts_with($mime, 'image/');
+
+                if ($subPath && file_exists($basePath . '/storage/uploads/' . $subPath)) {
+                    $localUrl = '/storage/uploads/' . $subPath;
+                } elseif ($subPath && file_exists($contentDir . '/uploads/' . $subPath)) {
+                    $localUrl = '/wp-content/uploads/' . $subPath;
+                }
+
+                $authorName = 'Unknown';
+                $authorId = (int) ($row['post_author'] ?? 0);
+                if ($authorId > 0) {
+                    try {
+                        $u = $db->select('display_name')->from($pfx . 'users')
+                            ->where('ID', $authorId)->limit(1)->fetch();
+                        $authorName = $u['display_name'] ?? 'Unknown';
+                    } catch (\Throwable) {}
+                }
+
+                $mediaItems[] = [
+                    'id' => $id,
+                    'title' => $row['post_title'] ?: $fileName ?: "(no title)",
+                    'file' => $fileName,
+                    'url' => $localUrl,
+                    'mime' => $mime,
+                    'isImage' => $isImage,
+                    'author' => $authorName,
+                    'date' => date('Y-m-d H:i', strtotime($row['post_date'] ?? '')),
+                ];
+            }
+
+            // Also scan Presto storage for local files not in WP DB
+            $storageDir = $basePath . '/storage/uploads';
+            if (is_dir($storageDir)) {
+                $iter = new RecursiveIteratorIterator(
+                    new RecursiveDirectoryIterator($storageDir, RecursiveDirectoryIterator::SKIP_DOTS)
+                );
+                foreach ($iter as $f) {
+                    if ($f->isDir() || $f->getFilename()[0] === '.') continue;
+                    $relative = str_replace($storageDir . '/', '', $f->getPathname());
+                    $dup = false;
+                    foreach ($mediaItems as $mi) {
+                        if ($mi['file'] === $f->getFilename()) { $dup = true; break; }
+                    }
+                    if ($dup) continue;
+                    $mime = mime_content_type($f->getPathname()) ?: 'application/octet-stream';
+                    $mediaItems[] = [
+                        'id' => 0,
+                        'title' => $f->getFilename(),
+                        'file' => $f->getFilename(),
+                        'url' => '/storage/uploads/' . $relative,
+                        'mime' => $mime,
+                        'isImage' => str_starts_with($mime, 'image/'),
+                        'author' => 'Presto',
+                        'date' => date('Y-m-d H:i', $f->getMTime()),
+                    ];
+                }
+            }
+            ?>
+
             <div id="post-body-content">
-                <div class="notice notice-info inline">
-                    <p>Media Library — uploaded files will appear here via the API.</p>
-                </div>
                 <div class="tablenav top">
+                    <div class="alignleft actions bulkactions">
+                        <select><option value="">Bulk actions</option></select>
+                        <input type="submit" class="button" value="Apply" />
+                    </div>
                     <div class="alignleft actions">
                         <select><option value="">All media items</option></select>
                         <input type="submit" class="button" value="Filter" />
+                    </div>
+                    <div class="tablenav-pages">
+                        <span class="displaying-num"><?= count($mediaItems) ?> items</span>
                     </div>
                     <br class="clear" />
                 </div>
@@ -160,9 +256,49 @@
                         <th class="manage-column column-date">Date</th>
                     </tr></thead>
                     <tbody id="the-list">
+                        <?php if (empty($mediaItems)): ?>
                         <tr class="no-items"><td class="colspanchange" colspan="5">No media items found.</td></tr>
+                        <?php else: ?>
+                        <?php foreach ($mediaItems as $mi): ?>
+                        <tr>
+                            <th class="check-column"><input type="checkbox" /></th>
+                            <td class="column-icon">
+                                <?php if ($mi['isImage'] && $mi['url']): ?>
+                                <img src="<?= htmlspecialchars($mi['url']) ?>" alt="" style="width:60px;height:60px;object-fit:cover;border-radius:4px;" />
+                                <?php else: ?>
+                                <div style="width:60px;height:60px;background:#f0f0f1;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:24px;color:#999;"><?= str_starts_with($mi['mime'], 'video/') ? '🎬' : (str_starts_with($mi['mime'], 'audio/') ? '🎵' : '📄') ?></div>
+                                <?php endif; ?>
+                            </td>
+                            <td class="column-title column-primary">
+                                <strong><?= htmlspecialchars($mi['title']) ?></strong>
+                                <div class="row-actions">
+                                    <span class="view"><a href="<?= htmlspecialchars($mi['url']) ?>" target="_blank">View</a></span>
+                                </div>
+                            </td>
+                            <td class="column-author"><?= htmlspecialchars($mi['author']) ?></td>
+                            <td class="column-date"><?= htmlspecialchars($mi['date']) ?></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
+                    <tfoot><tr>
+                        <td class="manage-column column-cb check-column"><input type="checkbox" /></td>
+                        <th class="manage-column column-icon">File</th>
+                        <th class="manage-column column-title column-primary">Title</th>
+                        <th class="manage-column column-author">Author</th>
+                        <th class="manage-column column-date">Date</th>
+                    </tr></tfoot>
                 </table>
+                <div class="tablenav bottom">
+                    <div class="alignleft actions bulkactions">
+                        <select><option value="">Bulk actions</option></select>
+                        <input type="submit" class="button" value="Apply" />
+                    </div>
+                    <div class="tablenav-pages">
+                        <span class="displaying-num"><?= count($mediaItems) ?> items</span>
+                    </div>
+                    <br class="clear" />
+                </div>
             </div>
 
         <?php elseif ($activeScreen === 'edit-pages'): ?>
