@@ -55,9 +55,9 @@
                             <?php
                             $db = app(\Cycle\Database\DatabaseInterface::class);
                             $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
-                            $postCount = (int) ($db->select('COUNT(*) as c')->from($pfx . 'posts')->where('post_status', '!=', 'auto-draft')->fetch()['c'] ?? 0);
-                            $userCount = (int) ($db->select('COUNT(*) as c')->from($pfx . 'users')->fetch()['c'] ?? 0);
-                            $commentCount = (int) ($db->select('COUNT(*) as c')->from($pfx . 'comments')->fetch()['c'] ?? 0);
+                            $postCount = $db->select()->from($pfx . 'posts')->where('post_status', '!=', 'auto-draft')->count();
+                            $userCount = $db->select()->from($pfx . 'users')->count();
+                            $commentCount = $db->select()->from($pfx . 'comments')->count();
                             ?>
                             <ul style="list-style:none;margin:0;padding:0;">
                                 <li style="padding:4px 0;"><strong><?= $postCount ?></strong> Posts</li>
@@ -164,8 +164,8 @@
                 $attachedFile = null;
                 try {
                     $m = $db->select('meta_value')->from($pfx . 'postmeta')
-                        ->where('post_id', $id)->where('meta_key', '_wp_attached_file')->limit(1)->fetch();
-                    $attachedFile = $m['meta_value'] ?? null;
+                        ->where('post_id', $id)->where('meta_key', '_wp_attached_file')->limit(1)->fetchAll();
+                    $attachedFile = $m[0]['meta_value'] ?? null;
                 } catch (\Throwable) {}
 
                 $subPath = $attachedFile ?? '';
@@ -186,8 +186,8 @@
                 if ($authorId > 0) {
                     try {
                         $u = $db->select('display_name')->from($pfx . 'users')
-                            ->where('ID', $authorId)->limit(1)->fetch();
-                        $authorName = $u['display_name'] ?? 'Unknown';
+                            ->where('ID', $authorId)->limit(1)->fetchAll();
+                        $authorName = $u[0]['display_name'] ?? 'Unknown';
                     } catch (\Throwable) {}
                 }
 
@@ -562,9 +562,9 @@
                             <td class="email column-email"><?= htmlspecialchars($u['user_email'] ?? '') ?></td>
                             <td class="role column-role"><?php
                             try {
-                                $caps = $db->select('meta_value')->from($pfx . 'usermeta')->where('user_id', $uid)->where('meta_key', 'wp_capabilities')->limit(1)->fetch();
-                                if ($caps) {
-                                    $unser = unserialize($caps['meta_value']);
+                                $caps = $db->select('meta_value')->from($pfx . 'usermeta')->where('user_id', $uid)->where('meta_key', 'wp_capabilities')->limit(1)->fetchAll();
+                                if (!empty($caps[0]['meta_value'])) {
+                                    $unser = unserialize($caps[0]['meta_value']);
                                     if (is_array($unser)) echo htmlspecialchars(implode(', ', array_keys($unser)));
                                     else echo 'subscriber';
                                 } else echo 'subscriber';
