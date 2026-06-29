@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 use PrestoWorld\Bridge\WordPress\Admin\Controllers\WpAdminController;
 use App\Http\Controllers\Admin\AdminApiController;
+use App\Http\Controllers\Admin\SettingsController;
 
 /** @var \App\Http\Routing\Contracts\RouterInterface $router */
 
@@ -27,7 +28,9 @@ $router->group(['prefix' => '/wp-admin'], function () use ($router) {
     // Posts
     $router->get('/edit.php', WpAdminController::class);
     $router->get('/post-new.php', WpAdminController::class);
+    $router->post('/post-new.php', [\App\Http\Controllers\Admin\PostsController::class, 'savePost']);
     $router->get('/post.php', WpAdminController::class);
+    $router->post('/post.php', [\App\Http\Controllers\Admin\PostsController::class, 'updatePost']);
 
     // Media
     $router->get('/upload.php', WpAdminController::class);
@@ -67,12 +70,19 @@ $router->group(['prefix' => '/wp-admin'], function () use ($router) {
 
     // Settings
     $router->get('/options-general.php', WpAdminController::class);
+    $router->post('/options-general.php', [SettingsController::class, 'saveGeneral']);
     $router->get('/options-writing.php', WpAdminController::class);
+    $router->post('/options-writing.php', [SettingsController::class, 'saveWriting']);
     $router->get('/options-reading.php', WpAdminController::class);
+    $router->post('/options-reading.php', [SettingsController::class, 'saveReading']);
     $router->get('/options-discussion.php', WpAdminController::class);
+    $router->post('/options-discussion.php', [SettingsController::class, 'saveDiscussion']);
     $router->get('/options-media.php', WpAdminController::class);
+    $router->post('/options-media.php', [SettingsController::class, 'saveMedia']);
     $router->get('/options-permalink.php', WpAdminController::class);
+    $router->post('/options-permalink.php', [SettingsController::class, 'savePermalink']);
     $router->get('/options-privacy.php', WpAdminController::class);
+    $router->post('/options-privacy.php', [SettingsController::class, 'savePrivacy']);
 
     // Updates
     $router->get('/update-core.php', WpAdminController::class);

@@ -55,7 +55,7 @@
                             <?php
                             $db = app(\Cycle\Database\DatabaseInterface::class);
                             $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
-                            $postCount = $db->select()->from($pfx . 'posts')->where('post_status', '!=', 'auto-draft')->count();
+                            $postCount = $db->select()->from($pfx . 'posts')->where('status', '!=', 'auto-draft')->count();
                             $userCount = $db->select()->from($pfx . 'users')->count();
                             $commentCount = $db->select()->from($pfx . 'comments')->count();
                             ?>
@@ -74,7 +74,7 @@
             <?php
             $db = app(\Cycle\Database\DatabaseInterface::class);
             $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
-            $posts = $db->select('*')->from($pfx . 'posts')->where('post_type', 'post')->where('post_status', '!=', 'auto-draft')->orderBy('post_date', 'DESC')->fetchAll();
+            $posts = $db->select('*')->from($pfx . 'posts')->where('post_type', 'post')->where('status', '!=', 'auto-draft')->orderBy('created_at', 'DESC')->fetchAll();
             $totalPosts = count($posts);
             ?>
             <div id="post-body-content">
@@ -102,7 +102,7 @@
                         <tr>
                             <th class="check-column"><input type="checkbox" /></th>
                             <td class="title column-title has-row-actions column-primary">
-                                <strong><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>"><?= htmlspecialchars($p['post_title'] ?? '') ?></a></strong>
+                                <strong><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>"><?= htmlspecialchars($p['title'] ?? '') ?></a></strong>
                                 <div class="row-actions">
                                     <span class="edit"><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>&action=edit">Edit</a></span>
                                     <span class="trash"><a href="#">Trash</a></span>
@@ -111,7 +111,7 @@
                             </td>
                             <td class="author column-author">admin</td>
                             <td class="categories column-categories">Uncategorized</td>
-                            <td class="date column-date"><?= htmlspecialchars(date('Y-m-d', strtotime($p['post_date'] ?? ''))) ?></td>
+                            <td class="date column-date"><?= htmlspecialchars(date('Y-m-d', strtotime($p['created_at'] ?? ''))) ?></td>
                         </tr>
                         <?php endforeach; ?>
                         <?php endif; ?>
@@ -150,8 +150,8 @@
                 $mediaRows = $db->select('*')
                     ->from($pfx . 'posts')
                     ->where('post_type', 'attachment')
-                    ->where('post_status', '!=', 'auto-draft')
-                    ->orderBy('post_date', 'DESC')
+                    ->where('status', '!=', 'auto-draft')
+                    ->orderBy('created_at', 'DESC')
                     ->limit(50)
                     ->fetchAll();
             } catch (\Throwable) {
@@ -182,7 +182,7 @@
                 }
 
                 $authorName = 'Unknown';
-                $authorId = (int) ($row['post_author'] ?? 0);
+                $authorId = (int) ($row['author_id'] ?? 0);
                 if ($authorId > 0) {
                     try {
                         $u = $db->select('display_name')->from($pfx . 'users')
@@ -193,13 +193,13 @@
 
                 $mediaItems[] = [
                     'id' => $id,
-                    'title' => $row['post_title'] ?: $fileName ?: "(no title)",
+                    'title' => $row['title'] ?: $fileName ?: "(no title)",
                     'file' => $fileName,
                     'url' => $localUrl,
                     'mime' => $mime,
                     'isImage' => $isImage,
                     'author' => $authorName,
-                    'date' => date('Y-m-d H:i', strtotime($row['post_date'] ?? '')),
+                    'date' => date('Y-m-d H:i', strtotime($row['created_at'] ?? '')),
                 ];
             }
 
@@ -306,7 +306,7 @@
             <?php
             $db = app(\Cycle\Database\DatabaseInterface::class);
             $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
-            $pages = $db->select('*')->from($pfx . 'posts')->where('post_type', 'page')->where('post_status', '!=', 'auto-draft')->orderBy('post_date', 'DESC')->fetchAll();
+            $pages = $db->select('*')->from($pfx . 'posts')->where('post_type', 'page')->where('status', '!=', 'auto-draft')->orderBy('created_at', 'DESC')->fetchAll();
             ?>
             <div id="post-body-content">
                 <table class="wp-list-table widefat fixed striped pages">
@@ -324,14 +324,14 @@
                         <tr>
                             <th class="check-column"><input type="checkbox" /></th>
                             <td class="title column-title has-row-actions column-primary">
-                                <strong><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>&action=edit"><?= htmlspecialchars($p['post_title'] ?? '') ?></a></strong>
+                                <strong><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>&action=edit"><?= htmlspecialchars($p['title'] ?? '') ?></a></strong>
                                 <div class="row-actions">
                                     <span class="edit"><a href="<?= htmlspecialchars($__screenUrl('post')) ?>?post=<?= $pid ?>&action=edit">Edit</a></span>
                                     <span class="view"><a href="/?page_id=<?= $pid ?>">View</a></span>
                                 </div>
                             </td>
                             <td class="author column-author">admin</td>
-                            <td class="date column-date"><?= htmlspecialchars(date('Y-m-d', strtotime($p['post_date'] ?? ''))) ?></td>
+                            <td class="date column-date"><?= htmlspecialchars(date('Y-m-d', strtotime($p['created_at'] ?? ''))) ?></td>
                         </tr>
                         <?php endforeach; ?>
                         <?php endif; ?>
@@ -692,8 +692,20 @@
                 'options-permalink' => ['Permalinks', 'options-permalink.php'],
                 'options-privacy'   => ['Privacy', 'options-privacy.php'],
             ];
+            $optionRepo = null;
+            if (class_exists(\PrestoWorld\Foundation\Database\OptionRepository::class)) {
+                $app = \Witals\Framework\Container\Container::getInstance();
+                if ($app !== null && $app->has(\PrestoWorld\Foundation\Database\OptionRepository::class)) {
+                    $optionRepo = $app->make(\PrestoWorld\Foundation\Database\OptionRepository::class);
+                }
+            }
+            $opt = fn(string $key, string $default = '') => $optionRepo?->has($key) ? (string) $optionRepo->get($key, $default) : $default;
+            $optChecked = fn(string $key, string $expected = '1') => $optionRepo?->has($key) ? ($optionRepo->get($key, '') === $expected ? ' checked' : '') : $expected;
             ?>
             <div id="post-body-content">
+                <?php if (isset($_GET['settings_saved'])): ?>
+                <div class="notice notice-success inline"><p><strong>Settings saved.</strong></p></div>
+                <?php endif; ?>
                 <nav style="margin-bottom:16px;border-bottom:1px solid #dcdcde;display:flex;gap:0;">
                     <?php foreach ($settingTabs as $id => [$label, $url]): ?>
                     <a href="/wp-admin/<?= $url ?>"
@@ -706,18 +718,28 @@
                 <?php if ($activeScreen === 'settings'): ?>
                 <form action="" method="post">
                     <table class="form-table">
-                        <tr><th scope="row"><label>Site Title</label></th><td><input name="site-title" type="text" value="PrestoWorld" class="regular-text" /></td></tr>
-                        <tr><th scope="row"><label>Tagline</label></th><td><input name="site-tagline" type="text" value="Digital marketplace platform" class="regular-text" /></td></tr>
-                        <tr><th scope="row"><label>WordPress Address (URL)</label></th><td><input name="siteurl" type="url" value="https://prestoworld.org" class="regular-text code" /></td></tr>
-                        <tr><th scope="row"><label>Site Address (URL)</label></th><td><input name="home" type="url" value="https://prestoworld.org" class="regular-text code" /></td></tr>
-                        <tr><th scope="row"><label>Administration Email Address</label></th><td><input name="admin_email" type="email" value="admin@prestoworld.org" class="regular-text" /></td></tr>
-                        <tr><th scope="row"><label>Membership</label></th><td><label><input type="checkbox" /> Anyone can register</label></td></tr>
-                        <tr><th scope="row"><label>New User Default Role</label></th><td><select><option>Subscriber</option><option>Contributor</option><option>Author</option><option>Editor</option><option>Administrator</option></select></td></tr>
-                        <tr><th scope="row"><label>Site Language</label></th><td><select><option>English (United States)</option></select></td></tr>
-                        <tr><th scope="row"><label>Timezone</label></th><td><select><option>UTC</option></select></td></tr>
-                        <tr><th scope="row"><label>Date Format</label></th><td><select><option>F j, Y</option></select></td></tr>
-                        <tr><th scope="row"><label>Time Format</label></th><td><select><option>g:i a</option></select></td></tr>
-                        <tr><th scope="row"><label>Week Starts On</label></th><td><select><option>Monday</option></select></td></tr>
+                        <tr><th scope="row"><label>Site Title</label></th><td><input name="blogname" type="text" value="<?= htmlspecialchars($opt('blogname', 'PrestoWorld')) ?>" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label>Tagline</label></th><td><input name="blogdescription" type="text" value="<?= htmlspecialchars($opt('blogdescription', '')) ?>" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label>WordPress Address (URL)</label></th><td><input name="siteurl" type="url" value="<?= htmlspecialchars($opt('siteurl', '/')) ?>" class="regular-text code" /></td></tr>
+                        <tr><th scope="row"><label>Site Address (URL)</label></th><td><input name="home" type="url" value="<?= htmlspecialchars($opt('home', '/')) ?>" class="regular-text code" /></td></tr>
+                        <tr><th scope="row"><label>Administration Email Address</label></th><td><input name="admin_email" type="email" value="<?= htmlspecialchars($opt('admin_email', 'admin@prestoworld.org')) ?>" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label>Membership</label></th><td><label><input name="users_can_register" type="checkbox" value="1"<?= $optChecked('users_can_register', '1') ?> /> Anyone can register</label></td></tr>
+                        <tr><th scope="row"><label>New User Default Role</label></th><td><select name="default_role">
+                            <?php $role = $opt('default_role', 'subscriber'); ?>
+                            <option value="subscriber"<?= $role === 'subscriber' ? ' selected' : '' ?>>Subscriber</option>
+                            <option value="contributor"<?= $role === 'contributor' ? ' selected' : '' ?>>Contributor</option>
+                            <option value="author"<?= $role === 'author' ? ' selected' : '' ?>>Author</option>
+                            <option value="editor"<?= $role === 'editor' ? ' selected' : '' ?>>Editor</option>
+                            <option value="administrator"<?= $role === 'administrator' ? ' selected' : '' ?>>Administrator</option>
+                        </select></td></tr>
+                        <tr><th scope="row"><label>Timezone</label></th><td><input name="timezone_string" type="text" value="<?= htmlspecialchars($opt('timezone_string', 'UTC')) ?>" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label>Date Format</label></th><td><input name="date_format" type="text" value="<?= htmlspecialchars($opt('date_format', 'F j, Y')) ?>" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label>Time Format</label></th><td><input name="time_format" type="text" value="<?= htmlspecialchars($opt('time_format', 'g:i a')) ?>" class="regular-text" /></td></tr>
+                        <tr><th scope="row"><label>Week Starts On</label></th><td><select name="start_of_week">
+                            <?php $sow = $opt('start_of_week', '0'); for ($d = 0; $d < 7; $d++): ?>
+                            <option value="<?= $d ?>"<?= $sow === (string) $d ? ' selected' : '' ?>><?= [__('Sunday'), __('Monday'), __('Tuesday'), __('Wednesday'), __('Thursday'), __('Friday'), __('Saturday')][$d] ?></option>
+                            <?php endfor; ?>
+                        </select></td></tr>
                     </table>
                     <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
                 </form>
@@ -725,10 +747,10 @@
                 <?php elseif ($activeScreen === 'options-writing'): ?>
                 <form action="" method="post">
                     <table class="form-table">
-                        <tr><th scope="row"><label>Default Post Category</label></th><td><select><option>Uncategorized</option></select></td></tr>
-                        <tr><th scope="row"><label>Default Post Format</label></th><td><select><option>Standard</option></select></td></tr>
+                        <tr><th scope="row"><label>Default Post Category</label></th><td><input name="default_category" type="text" value="<?= htmlspecialchars($opt('default_category', '1')) ?>" class="small-text" /></td></tr>
+                        <tr><th scope="row"><label>Default Post Format</label></th><td><input name="default_post_format" type="text" value="<?= htmlspecialchars($opt('default_post_format', '0')) ?>" class="small-text" /></td></tr>
                         <tr><th scope="row"><label>Post via email</label></th><td><p style="color:#787c82;">Configure a secret email address to post by email.</p></td></tr>
-                        <tr><th scope="row"><label>Remote Publishing</label></th><td><label><input type="checkbox" /> Enable the XML-RPC publishing protocol.</label></td></tr>
+                        <tr><th scope="row"><label>Remote Publishing</label></th><td><label><input name="enable_xmlrpc" type="checkbox" value="1"<?= $optChecked('enable_xmlrpc', '1') ?> /> Enable the XML-RPC publishing protocol.</label></td></tr>
                     </table>
                     <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
                 </form>
@@ -738,18 +760,19 @@
                     <table class="form-table">
                         <tr><th scope="row"><label>Your homepage displays</label></th>
                             <td>
-                                <label><input type="radio" name="show_on_front" checked /> Your latest posts</label><br />
-                                <label><input type="radio" name="show_on_front" /> A static page</label>
+                                <?php $sof = $opt('show_on_front', 'posts'); ?>
+                                <label><input type="radio" name="show_on_front" value="posts"<?= $sof === 'posts' ? ' checked' : '' ?> /> Your latest posts</label><br />
+                                <label><input type="radio" name="show_on_front" value="page"<?= $sof === 'page' ? ' checked' : '' ?> /> A static page</label>
                             </td>
                         </tr>
-                        <tr><th scope="row"><label>Blog pages show at most</label></th><td><input type="number" value="10" class="small-text" /> posts</td></tr>
-                        <tr><th scope="row"><label>Syndication feeds show the most recent</label></th><td><input type="number" value="10" class="small-text" /> items</td></tr>
+                        <tr><th scope="row"><label>Blog pages show at most</label></th><td><input name="posts_per_page" type="number" value="<?= htmlspecialchars($opt('posts_per_page', '10')) ?>" class="small-text" /> posts</td></tr>
                         <tr><th scope="row"><label>For each post in a feed, show</label></th>
-                            <td><label><input type="radio" name="rss_use_excerpt" checked /> Full text</label><br />
-                                <label><input type="radio" name="rss_use_excerpt" /> Summary</label></td>
+                            <td><?php $rss = $opt('rss_use_excerpt', '0'); ?>
+                                <label><input type="radio" name="rss_use_excerpt" value="0"<?= $rss === '0' ? ' checked' : '' ?> /> Full text</label><br />
+                                <label><input type="radio" name="rss_use_excerpt" value="1"<?= $rss === '1' ? ' checked' : '' ?> /> Summary</label></td>
                         </tr>
                         <tr><th scope="row"><label>Search Engine Visibility</label></th>
-                            <td><label><input type="checkbox" /> Discourage search engines from indexing this site</label></td>
+                            <td><label><input name="blog_public" type="checkbox" value="1"<?= $optChecked('blog_public', '0') ?> /> Discourage search engines from indexing this site</label></td>
                         </tr>
                     </table>
                     <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
@@ -759,21 +782,57 @@
                 <form action="" method="post">
                     <table class="form-table">
                         <tr><th scope="row">Default post settings</th>
-                            <td><label><input type="checkbox" checked /> Attempt to notify any blogs linked to from the post</label><br />
-                                <label><input type="checkbox" checked /> Allow link notifications from other blogs (pingbacks and trackbacks)</label></td>
+                            <td><label><input name="default_pingback_flag" type="checkbox" value="1"<?= $optChecked('default_pingback_flag', '1') ?> /> Attempt to notify any blogs linked to from the post</label><br />
+                                <label><input name="default_ping_status" type="checkbox" value="open"<?= $optChecked('default_ping_status', 'open') ?> /> Allow link notifications from other blogs (pingbacks and trackbacks)</label></td>
                         </tr>
                         <tr><th scope="row"><label>Allow people to post comments on new articles</label></th>
-                            <td><label><input type="checkbox" checked /> Allow people to submit comments on new posts</label></td>
+                            <td><label><input name="default_comment_status" type="checkbox" value="open"<?= $optChecked('default_comment_status', 'open') ?> /> Allow people to submit comments on new posts</label></td>
                         </tr>
-                        <tr><th scope="row"><label>Comment must be manually approved</label></th>
-                            <td><label><input type="checkbox" /> Comment author must have a previously approved comment</label></td>
+                        <tr><th scope="row"><label>Other comment settings</label></th>
+                            <td><label><input name="require_name_email" type="checkbox" value="1"<?= $optChecked('require_name_email', '1') ?> /> Comment author must fill out name and email</label><br />
+                                <label><input name="comment_registration" type="checkbox" value="1"<?= $optChecked('comment_registration', '1') ?> /> Users must be registered and logged in to comment</label><br />
+                                <label><input name="close_comments_for_old_posts" type="checkbox" value="1"<?= $optChecked('close_comments_for_old_posts', '1') ?> /> Automatically close comments on articles older than <input name="close_comments_days_old" type="number" value="<?= htmlspecialchars($opt('close_comments_days_old', '14')) ?>" class="small-text" /> days</label></td>
+                        </tr>
+                        <tr><th scope="row"><label>Threaded comments</label></th>
+                            <td><label><input name="thread_comments" type="checkbox" value="1"<?= $optChecked('thread_comments', '1') ?> /> Enable threaded (nested) comments <input name="thread_comments_depth" type="number" value="<?= htmlspecialchars($opt('thread_comments_depth', '5')) ?>" class="small-text" /> levels deep</label></td>
+                        </tr>
+                        <tr><th scope="row"><label>Break comments into pages</label></th>
+                            <td><label><input name="page_comments" type="checkbox" value="1"<?= $optChecked('page_comments', '1') ?> /> Break comments into pages with <input name="comments_per_page" type="number" value="<?= htmlspecialchars($opt('comments_per_page', '50')) ?>" class="small-text" /> top level comments per page and the <select name="default_comments_page"><option value="newest"<?= $opt('default_comments_page', 'newest') === 'newest' ? ' selected' : '' ?>>last</option><option value="oldest"<?= $opt('default_comments_page', 'newest') === 'oldest' ? ' selected' : '' ?>>first</option></select> page displayed by default</label></td>
+                        </tr>
+                        <tr><th scope="row"><label>Comment email notification</label></th>
+                            <td><label><input name="comments_notify" type="checkbox" value="1"<?= $optChecked('comments_notify', '1') ?> /> Anyone posts a comment</label><br />
+                                &nbsp;&nbsp;&nbsp;<label><input name="moderation_notify" type="checkbox" value="1"<?= $optChecked('moderation_notify', '1') ?> /> A comment is held for moderation</label></td>
                         </tr>
                         <tr><th scope="row"><label>Comment moderation</label></th>
-                            <td><textarea rows="4" class="large-text code" placeholder="Hold a comment in the queue if it contains X links. Separate words with commas."></textarea></td>
+                            <td><label><input name="comment_moderation" type="checkbox" value="1"<?= $optChecked('comment_moderation', '1') ?> /> Comment must be manually approved</label><br />
+                                <label><input name="comment_previously_approved" type="checkbox" value="1"<?= $optChecked('comment_previously_approved', '1') ?> /> Comment author must have a previously approved comment</label></td>
+                        </tr>
+                        <tr><th scope="row"><label>Comment moderation keys</label></th>
+                            <td><textarea name="moderation_keys" rows="4" class="large-text code" placeholder="Hold a comment in the queue if it contains X links. Separate words with commas."><?= htmlspecialchars($opt('moderation_keys', '')) ?></textarea></td>
+                        </tr>
+                        <tr><th scope="row"><label>Disallowed Comment Keys</label></th>
+                            <td><textarea name="disallowed_keys" rows="4" class="large-text code" placeholder="When a comment contains any of these words in its content, name, URL, email, or IP, it will be put in the Trash."><?= htmlspecialchars($opt('disallowed_keys', '')) ?></textarea></td>
                         </tr>
                         <tr><th scope="row"><label>Avatars</label></th>
-                            <td><label><input type="checkbox" checked /> Show avatars</label><br />
-                                <select><option>Mystery Person</option></select></td>
+                            <td><label><input name="show_avatars" type="checkbox" value="1"<?= $optChecked('show_avatars', '1') ?> /> Show avatars</label><br />
+                                <select name="avatar_rating">
+                                    <?php $ar = $opt('avatar_rating', 'G'); ?>
+                                    <option value="G"<?= $ar === 'G' ? ' selected' : '' ?>>G &#8212; Suitable for all audiences</option>
+                                    <option value="PG"<?= $ar === 'PG' ? ' selected' : '' ?>>PG &#8212; Possibly offensive, usually for audiences 13 and above</option>
+                                    <option value="R"<?= $ar === 'R' ? ' selected' : '' ?>>R &#8212; Intended for adult audiences above 17</option>
+                                    <option value="X"<?= $ar === 'X' ? ' selected' : '' ?>>X &#8212; Even more mature than above</option>
+                                </select><br />
+                                <select name="avatar_default">
+                                    <?php $ad = $opt('avatar_default', 'mystery'); ?>
+                                    <option value="mystery"<?= $ad === 'mystery' ? ' selected' : '' ?>>Mystery Person</option>
+                                    <option value="blank"<?= $ad === 'blank' ? ' selected' : '' ?>>Blank</option>
+                                    <option value="gravatar_default"<?= $ad === 'gravatar_default' ? ' selected' : '' ?>>Gravatar Logo</option>
+                                    <option value="identicon"<?= $ad === 'identicon' ? ' selected' : '' ?>>Identicon (Generated)</option>
+                                    <option value="wavatar"<?= $ad === 'wavatar' ? ' selected' : '' ?>>Wavatar (Generated)</option>
+                                    <option value="monsterid"<?= $ad === 'monsterid' ? ' selected' : '' ?>>MonsterID (Generated)</option>
+                                    <option value="retro"<?= $ad === 'retro' ? ' selected' : '' ?>>Retro (Generated)</option>
+                                </select>
+                            </td>
                         </tr>
                     </table>
                     <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
@@ -783,17 +842,16 @@
                 <form action="" method="post">
                     <table class="form-table">
                         <tr><th scope="row"><label>Thumbnail size</label></th>
-                            <td>Width: <input type="number" value="150" class="small-text" /> Height: <input type="number" value="150" class="small-text" /><br />
-                                <label><input type="checkbox" checked /> Crop thumbnail to exact dimensions</label></td>
+                            <td>Width: <input name="thumbnail_size_w" type="number" value="<?= htmlspecialchars($opt('thumbnail_size_w', '150')) ?>" class="small-text" /> Height: <input name="thumbnail_size_h" type="number" value="<?= htmlspecialchars($opt('thumbnail_size_h', '150')) ?>" class="small-text" /></td>
                         </tr>
                         <tr><th scope="row"><label>Medium size</label></th>
-                            <td>Max Width: <input type="number" value="300" class="small-text" /> Max Height: <input type="number" value="300" class="small-text" /></td>
+                            <td>Max Width: <input name="medium_size_w" type="number" value="<?= htmlspecialchars($opt('medium_size_w', '300')) ?>" class="small-text" /> Max Height: <input name="medium_size_h" type="number" value="<?= htmlspecialchars($opt('medium_size_h', '300')) ?>" class="small-text" /></td>
                         </tr>
                         <tr><th scope="row"><label>Large size</label></th>
-                            <td>Max Width: <input type="number" value="1024" class="small-text" /> Max Height: <input type="number" value="1024" class="small-text" /></td>
+                            <td>Max Width: <input name="large_size_w" type="number" value="<?= htmlspecialchars($opt('large_size_w', '1024')) ?>" class="small-text" /> Max Height: <input name="large_size_h" type="number" value="<?= htmlspecialchars($opt('large_size_h', '1024')) ?>" class="small-text" /></td>
                         </tr>
                         <tr><th scope="row"><label>Uploading Files</label></th>
-                            <td><label><input type="checkbox" /> Organize my uploads into month- and year-based folders</label></td>
+                            <td><label><input name="uploads_use_yearmonth_folders" type="checkbox" value="1"<?= $optChecked('uploads_use_yearmonth_folders', '1') ?> /> Organize my uploads into month- and year-based folders</label></td>
                         </tr>
                     </table>
                     <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
@@ -804,16 +862,18 @@
                     <table class="form-table">
                         <tr><th scope="row"><label>Common Settings</label></th>
                             <td>
-                                <label><input type="radio" name="permalink_structure" /> Plain</label><br />
-                                <label><input type="radio" name="permalink_structure" /> Day and name</label><br />
-                                <label><input type="radio" name="permalink_structure" checked /> Post name</label><br />
-                                <label><input type="radio" name="permalink_structure" /> Custom Structure</label><br />
-                                <input type="text" value="/%postname%/" class="regular-text code" style="margin-top:4px;" />
+                                <?php $ps = $opt('permalink_structure', '/%postname%/'); ?>
+                                <label><input type="radio" name="permalink_structure" value=""<?= $ps === '' ? ' checked' : '' ?> /> Plain</label><br />
+                                <label><input type="radio" name="permalink_structure" value="/%year%/%monthnum%/%day%/%postname%/"<?= $ps === '/%year%/%monthnum%/%day%/%postname%/' ? ' checked' : '' ?> /> Day and name</label><br />
+                                <label><input type="radio" name="permalink_structure" value="/%year%/%monthnum%/%postname%/"<?= $ps === '/%year%/%monthnum%/%postname%/' ? ' checked' : '' ?> /> Month and name</label><br />
+                                <label><input type="radio" name="permalink_structure" value="/%postname%/"<?= $ps === '/%postname%/' ? ' checked' : '' ?> /> Post name</label><br />
+                                <label><input type="radio" name="permalink_structure" value="custom"<?= !in_array($ps, ['', '/%year%/%monthnum%/%day%/%postname%/', '/%year%/%monthnum%/%postname%/', '/%postname%/'], true) ? ' checked' : '' ?> /> Custom Structure</label><br />
+                                <input name="permalink_structure_custom" type="text" value="<?= htmlspecialchars(in_array($ps, ['', '/%year%/%monthnum%/%day%/%postname%/', '/%year%/%monthnum%/%postname%/', '/%postname%/'], true) ? '/%postname%/' : $ps) ?>" class="regular-text code" style="margin-top:4px;" />
                             </td>
                         </tr>
                         <tr><th scope="row"><label>Optional</label></th>
-                            <td><input type="text" class="regular-text code" placeholder="category" /> Category base<br />
-                                <input type="text" class="regular-text code" placeholder="tags" style="margin-top:4px;" /> Tag base</td>
+                            <td><input name="category_base" type="text" value="<?= htmlspecialchars($opt('category_base', '')) ?>" class="regular-text code" placeholder="category" /> Category base<br />
+                                <input name="tag_base" type="text" value="<?= htmlspecialchars($opt('tag_base', '')) ?>" class="regular-text code" placeholder="tags" style="margin-top:4px;" /> Tag base</td>
                         </tr>
                     </table>
                     <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
@@ -824,8 +884,8 @@
                     <div class="notice notice-info inline"><p>Manage your privacy settings and create a privacy policy page.</p></div>
                     <table class="form-table">
                         <tr><th scope="row"><label>Privacy Policy Page</label></th>
-                            <td><select><option>— Select —</option></select>
-                                <p style="font-size:12px;color:#787c82;">Select a page to use as your privacy policy.</p></td>
+                            <td><input name="wp_page_for_privacy_policy" type="text" value="<?= htmlspecialchars($opt('wp_page_for_privacy_policy', '0')) ?>" class="regular-text" />
+                                <p style="font-size:12px;color:#787c82;">Enter the ID of the page to use as your privacy policy.</p></td>
                         </tr>
                     </table>
                     <p class="submit"><input type="submit" class="button button-primary" value="Save Changes" /></p>
