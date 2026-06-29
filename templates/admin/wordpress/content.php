@@ -119,24 +119,233 @@
                 </table>
             </div>
 
-        <?php elseif ($activeScreen === 'post-new'): ?>
+        <?php elseif ($activeScreen === 'post-new' || $activeScreen === 'post'): ?>
 
+            <?php
+            $isEdit = $activeScreen === 'post';
+            $postId = $isEdit ? (int) ($_GET['post'] ?? 0) : 0;
+            $pfx = getenv('PW_TABLE_PREFIX') ?: 'pw_';
+            $postData = [
+                'title' => '', 'content' => '', 'excerpt' => '', 'status' => 'draft',
+                'slug' => '', 'visibility' => 'public', 'password' => '',
+                'featured_image' => '', 'categories' => [], 'tags' => [],
+                'created_at' => '',
+            ];
+            $allCategories = [];
+            $allTags = [];
+            $db = \Witals\Framework\Container\Container::getInstance()
+                ?->make(\Cycle\Database\DatabaseInterface::class);
+
+            if ($db !== null) {
+                try {
+                    $allCategories = $db->select('*')->from($pfx . 'terms')
+                        ->where('taxonomy', 'category')->orderBy('name', 'ASC')->fetchAll();
+                } catch (\Throwable) { $allCategories = []; }
+                try {
+                    $allTags = $db->select('*')->from($pfx . 'terms')
+                        ->where('taxonomy', 'post_tag')->orderBy('name', 'ASC')->fetchAll();
+                } catch (\Throwable) { $allTags = []; }
+
+                if ($postId > 0) {
+                    try {
+                        $row = $db->select('*')->from($pfx . 'posts')->where('id', $postId)->run()->fetch();
+                        if ($row) {
+                            $meta = is_string($row['compact_meta'] ?? null)
+                                ? json_decode($row['compact_meta'], true) : ($row['compact_meta'] ?? []);
+                            $assignedTerms = $db->select('term_id')->from($pfx . 'term_relationships')
+                                ->where('object_id', $postId)->fetchAll();
+                            $assignedIds = array_map(fn($t) => (int) ($t['term_id'] ?? 0), $assignedTerms);
+                            $postData = [
+                                'title' => $row['title'] ?? '',
+                                'content' => $meta['content'] ?? '',
+                                'excerpt' => $meta['excerpt'] ?? '',
+                                'status' => $row['status'] ?? 'draft',
+                                'slug' => $row['slug'] ?? '',
+                                'visibility' => $meta['visibility'] ?? ($row['status'] === 'private' ? 'private' : 'public'),
+                                'password' => $meta['password'] ?? '',
+                                'featured_image' => $meta['featured_image'] ?? '',
+                                'categories' => $assignedIds,
+                                'tags' => [],
+                                'created_at' => $row['created_at'] ?? '',
+                            ];
+                            foreach ($assignedTerms as $t) {
+                                $tid = (int) ($t['term_id'] ?? 0);
+                                foreach ($allTags as $tag) {
+                                    if ((int) ($tag['id'] ?? 0) === $tid) {
+                                        $postData['tags'][] = $tag['name'] ?? '';
+                                    }
+                                }
+                            }
+                        }
+                    } catch (\Throwable) {}
+                }
+            }
+            $catIds = array_map(fn($c) => (int) ($c['id'] ?? 0), $postData['categories']);
+
+            $formAction = $isEdit ? '/wp-admin/post.php' : '/wp-admin/post-new.php';
+            $buttonLabel = $isEdit ? 'Update' : 'Publish';
+            $noticeMsg = '';
+            if (isset($_GET['saved'])) $noticeMsg = 'Post saved.';
+            elseif (isset($_GET['updated'])) $noticeMsg = 'Post updated.';
+            ?>
+            <style>
+            .pw-editor-wrap { display:flex; gap:20px; }
+            .pw-editor-main { flex:1; min-width:0; }
+            .pw-editor-side { width:280px; flex-shrink:0; }
+            .pw-meta-box { background:#fff; border:1px solid #dcdcde; margin-bottom:12px; }
+            .pw-meta-box-title { padding:8px 12px; font-size:13px; font-weight:600; border-bottom:1px solid #dcdcde; cursor:default; }
+            .pw-meta-box-inside { padding:8px 12px; font-size:12px; }
+            .pw-meta-box-inside label { display:block; margin-bottom:4px; color:#2c3338; font-weight:500; }
+            .pw-meta-box-inside input[type="text"],
+            .pw-meta-box-inside input[type="password"],
+            .pw-meta-box-inside input[type="datetime-local"],
+            .pw-meta-box-inside select,
+            .pw-meta-box-inside textarea { width:100%; box-sizing:border-box; }
+            .pw-meta-box-inside input[type="checkbox"] { margin-right:4px; }
+            .pw-publish-row { display:flex; gap:8px; margin-bottom:8px; }
+            .pw-publish-row .button { flex:1; text-align:center; }
+            .pw-tag-list { display:flex; flex-wrap:wrap; gap:4px; margin-top:4px; }
+            .pw-tag-item { background:#f0f0f1; border:1px solid #dcdcde; border-radius:3px; padding:2px 8px; font-size:11px; display:inline-flex; align-items:center; gap:4px; }
+            .pw-tag-item .remove { cursor:pointer; color:#b32d2e; font-weight:700; }
+            .pw-feat-img { max-width:100%; max-height:150px; display:block; margin:4px 0; border:1px solid #dcdcde; }
+            .pw-cat-list { max-height:180px; overflow-y:auto; }
+            .pw-cat-list label { font-weight:400; font-size:12px; }
+            </style>
             <div id="post-body-content">
-                <div class="notice notice-info inline">
-                    <p>Add New Post — data from <code>pw_posts</code> will save here.</p>
-                </div>
-                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;">
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-weight:600;margin-bottom:4px;">Title</label>
-                        <input type="text" style="width:100%;padding:8px;font-size:16px;border:1px solid #8c8f94;border-radius:4px;" placeholder="Add title" />
+                <?php if ($noticeMsg !== ''): ?>
+                <div class="notice notice-success inline"><p><strong><?= $noticeMsg ?></strong></p></div>
+                <?php endif; ?>
+
+                <form action="<?= $formAction ?>" method="post" id="post-editor-form">
+                    <input type="hidden" name="post_id" value="<?= $postId ?>" />
+                    <input type="hidden" name="post_type" value="post" />
+
+                    <div class="pw-editor-wrap">
+
+                        <div class="pw-editor-main">
+                            <div style="background:#fff;border:1px solid #dcdcde;padding:16px;margin-bottom:12px;">
+                                <input name="title" type="text" value="<?= htmlspecialchars($postData['title']) ?>"
+                                    style="width:100%;padding:8px;font-size:16px;border:1px solid #8c8f94;border-radius:4px;"
+                                    placeholder="Add title" />
+                            </div>
+
+                            <div style="background:#fff;border:1px solid #dcdcde;padding:16px;margin-bottom:12px;">
+                                <label style="display:block;font-weight:600;margin-bottom:4px;">Content</label>
+                                <textarea name="content" rows="20"
+                                    style="width:100%;padding:8px;border:1px solid #8c8f94;border-radius:4px;font-family:monospace;"><?= htmlspecialchars($postData['content']) ?></textarea>
+                            </div>
+
+                            <div style="background:#fff;border:1px solid #dcdcde;padding:16px;margin-bottom:12px;">
+                                <label style="display:block;font-weight:600;margin-bottom:4px;">Excerpt</label>
+                                <textarea name="excerpt" rows="3"
+                                    style="width:100%;padding:8px;border:1px solid #8c8f94;border-radius:4px;"><?= htmlspecialchars($postData['excerpt']) ?></textarea>
+                                <p style="color:#787c82;font-size:12px;margin:4px 0 0;">Excerpts are optional hand-crafted summaries of your content.</p>
+                            </div>
+                        </div>
+
+                        <div class="pw-editor-side">
+
+                            <div class="pw-meta-box">
+                                <div class="pw-meta-box-title">Publish</div>
+                                <div class="pw-meta-box-inside">
+                                    <div class="pw-publish-row">
+                                        <input type="submit" name="submit_save" class="button" value="Save Draft" />
+                                        <input type="submit" name="submit_publish" class="button button-primary" value="<?= $buttonLabel ?>" />
+                                    </div>
+
+                                    <label>Status</label>
+                                    <select name="status" style="margin-bottom:8px;">
+                                        <option value="draft"<?= $postData['status'] === 'draft' ? ' selected' : '' ?>>Draft</option>
+                                        <option value="pending"<?= $postData['status'] === 'pending' ? ' selected' : '' ?>>Pending Review</option>
+                                        <option value="publish"<?= $postData['status'] === 'publish' ? ' selected' : '' ?>>Published</option>
+                                        <option value="private"<?= $postData['status'] === 'private' ? ' selected' : '' ?>>Privately Published</option>
+                                    </select>
+
+                                    <label>Visibility</label>
+                                    <div style="margin-bottom:8px;">
+                                        <label><input type="radio" name="visibility" value="public"<?= $postData['visibility'] === 'public' ? ' checked' : '' ?> onclick="document.getElementById('pw-password-field').style.display='none'" /> Public</label><br />
+                                        <label><input type="radio" name="visibility" value="password"<?= $postData['visibility'] === 'password' ? ' checked' : '' ?> onclick="document.getElementById('pw-password-field').style.display='block'" /> Password protected</label><br />
+                                        <label><input type="radio" name="visibility" value="private"<?= $postData['visibility'] === 'private' ? ' checked' : '' ?> onclick="document.getElementById('pw-password-field').style.display='none'" /> Private</label>
+                                        <div id="pw-password-field" style="<?= $postData['visibility'] === 'password' ? '' : 'display:none' ?>;margin-top:4px;">
+                                            <input name="password" type="password" value="<?= htmlspecialchars($postData['password']) ?>" placeholder="Enter password" />
+                                        </div>
+                                    </div>
+
+                                    <?php if ($isEdit && $postData['created_at'] !== ''): ?>
+                                    <label>Published on</label>
+                                    <input name="publish_date" type="datetime-local" value="<?= date('Y-m-d\TH:i', strtotime($postData['created_at'])) ?>" />
+                                    <?php endif; ?>
+
+                                    <?php if ($isEdit): ?>
+                                    <hr style="margin:8px 0;border:none;border-top:1px solid #dcdcde;" />
+                                    <a href="#" onclick="if(confirm('Are you sure you want to move this post to Trash?')){document.getElementById('post-editor-form').action='/wp-admin/post.php?trash=1';document.getElementById('post-editor-form').submit();}return false;" style="color:#b32d2e;font-size:12px;">Move to Trash</a>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+
+                            <div class="pw-meta-box">
+                                <div class="pw-meta-box-title">Slug</div>
+                                <div class="pw-meta-box-inside">
+                                    <input name="slug" type="text" value="<?= htmlspecialchars($postData['slug']) ?>" placeholder="auto-generated" />
+                                </div>
+                            </div>
+
+                            <div class="pw-meta-box">
+                                <div class="pw-meta-box-title">Categories</div>
+                                <div class="pw-meta-box-inside">
+                                    <div class="pw-cat-list">
+                                        <?php if (empty($allCategories)): ?>
+                                        <p style="color:#787c82;">No categories found.</p>
+                                        <?php else: ?>
+                                        <?php foreach ($allCategories as $cat): $cid = (int) ($cat['id'] ?? 0); ?>
+                                        <label><input type="checkbox" name="categories[]" value="<?= $cid ?>"<?= in_array($cid, $catIds, true) ? ' checked' : '' ?> /> <?= htmlspecialchars($cat['name'] ?? '') ?></label><br />
+                                        <?php endforeach; ?>
+                                        <?php endif; ?>
+                                    </div>
+                                    <hr style="margin:8px 0;border:none;border-top:1px solid #dcdcde;" />
+                                    <input name="new_category" type="text" placeholder="+ Add New Category" style="font-size:12px;" />
+                                </div>
+                            </div>
+
+                            <div class="pw-meta-box">
+                                <div class="pw-meta-box-title">Tags</div>
+                                <div class="pw-meta-box-inside">
+                                    <input name="tags" type="text" value="<?= htmlspecialchars(implode(', ', $postData['tags'])) ?>" placeholder="Separate with commas" style="font-size:12px;" />
+                                    <p style="color:#787c82;font-size:11px;margin:4px 0 0;">Separate tags with commas.</p>
+                                </div>
+                            </div>
+
+                            <div class="pw-meta-box">
+                                <div class="pw-meta-box-title">Featured Image</div>
+                                <div class="pw-meta-box-inside">
+                                    <?php if ($postData['featured_image'] !== ''): ?>
+                                    <img src="<?= htmlspecialchars($postData['featured_image']) ?>" class="pw-feat-img" />
+                                    <?php endif; ?>
+                                    <input name="featured_image" type="text" value="<?= htmlspecialchars($postData['featured_image']) ?>" placeholder="Image URL" style="font-size:12px;" />
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
-                    <div style="margin-bottom:16px;">
-                        <label style="display:block;font-weight:600;margin-bottom:4px;">Content</label>
-                        <textarea rows="12" style="width:100%;padding:8px;border:1px solid #8c8f94;border-radius:4px;font-family:monospace;"></textarea>
-                    </div>
-                    <p class="submit"><input type="submit" class="button button-primary" value="Publish" /></p>
-                </div>
+                </form>
             </div>
+
+            <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var form = document.getElementById('post-editor-form');
+                if (form) {
+                    form.addEventListener('submit', function(e) {
+                        var btn = e.submitter;
+                        if (btn && btn.name === 'submit_save') {
+                            var statusSelect = form.querySelector('[name="status"]');
+                            if (statusSelect && statusSelect.value === 'publish') {
+                                statusSelect.value = 'draft';
+                            }
+                        }
+                    });
+                }
+            });
+            </script>
 
         <?php elseif ($activeScreen === 'upload'): ?>
 
