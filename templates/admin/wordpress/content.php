@@ -319,9 +319,10 @@
                                 <div class="pw-meta-box-title">Featured Image</div>
                                 <div class="pw-meta-box-inside">
                                     <?php if ($postData['featured_image'] !== ''): ?>
-                                    <img src="<?= htmlspecialchars($postData['featured_image']) ?>" class="pw-feat-img" />
+                                    <img src="<?= htmlspecialchars($postData['featured_image']) ?>" class="pw-feat-img" style="max-width:100%;height:auto;margin-bottom:8px;border-radius:4px;" />
                                     <?php endif; ?>
-                                    <input name="featured_image" type="text" value="<?= htmlspecialchars($postData['featured_image']) ?>" placeholder="Image URL" style="font-size:12px;" />
+                                    <input name="featured_image" type="hidden" value="<?= htmlspecialchars($postData['featured_image']) ?>" />
+                                    <div id="featured-image-picker"></div>
                                 </div>
                             </div>
 
@@ -329,6 +330,246 @@
                     </div>
                 </form>
             </div>
+
+            <style>
+            .pw-feat-picker-btn {
+                display: inline-flex !important;
+                align-items: center;
+                gap: 4px;
+                font-size: 12px !important;
+            }
+            .pw-feat-picker-preview {
+                position: relative;
+                margin-bottom: 8px;
+                cursor: pointer;
+                border-radius: 4px;
+                overflow: hidden;
+                display: inline-block;
+            }
+            .pw-feat-picker-preview:hover .pw-feat-picker-remove {
+                opacity: 1;
+            }
+            .pw-feat-picker-thumb {
+                max-width: 100%;
+                height: auto;
+                display: block;
+                border-radius: 4px;
+                border: 1px solid #dcdcde;
+            }
+            .pw-feat-picker-remove {
+                position: absolute;
+                top: 4px;
+                right: 4px;
+                background: rgba(0,0,0,0.6);
+                color: #fff;
+                border: none;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                cursor: pointer;
+                opacity: 0;
+                transition: opacity 0.15s;
+            }
+            .pw-feat-picker-remove:hover {
+                background: rgba(214,54,56,0.8);
+            }
+            .pw-feat-modal-overlay {
+                position: fixed;
+                inset: 0;
+                z-index: 100000;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .pw-feat-modal {
+                background: #fff;
+                border-radius: 8px;
+                width: 100%;
+                max-width: 640px;
+                max-height: 80vh;
+                display: flex;
+                flex-direction: column;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            }
+            .pw-feat-modal-header {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 16px 20px;
+                border-bottom: 1px solid #dcdcde;
+            }
+            .pw-feat-modal-header h2 {
+                margin: 0;
+                font-size: 16px;
+                font-weight: 600;
+            }
+            .pw-feat-modal-close {
+                background: none;
+                border: none;
+                cursor: pointer;
+                color: #787c82;
+                padding: 4px;
+                border-radius: 4px;
+                display: flex;
+            }
+            .pw-feat-modal-close:hover {
+                color: #1d2327;
+                background: #f0f0f1;
+            }
+            .pw-feat-modal-tabs {
+                display: flex;
+                border-bottom: 1px solid #dcdcde;
+                background: #f6f7f7;
+            }
+            .pw-feat-modal-tabs button {
+                flex: 1;
+                padding: 10px 16px;
+                border: none;
+                background: transparent;
+                cursor: pointer;
+                font-size: 13px;
+                font-weight: 500;
+                color: #787c82;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 6px;
+                border-bottom: 2px solid transparent;
+                transition: all 0.1s;
+            }
+            .pw-feat-modal-tabs button:hover {
+                color: #1d2327;
+                background: #fff;
+            }
+            .pw-feat-tab-active {
+                color: #2271b1 !important;
+                border-bottom-color: #2271b1 !important;
+                background: #fff !important;
+            }
+            .pw-feat-modal-body {
+                flex: 1;
+                overflow-y: auto;
+                padding: 16px 20px;
+                min-height: 300px;
+            }
+            .pw-feat-loading,
+            .pw-feat-empty {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 12px;
+                padding: 60px 20px;
+                color: #787c82;
+            }
+            .pw-feat-empty p {
+                margin: 0;
+                font-size: 13px;
+            }
+            .pw-feat-spin {
+                animation: pw-spin 1s linear infinite;
+            }
+            @keyframes pw-spin {
+                to { transform: rotate(360deg); }
+            }
+            .pw-feat-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 12px;
+            }
+            .pw-feat-grid-item {
+                position: relative;
+                border: 2px solid #dcdcde;
+                border-radius: 6px;
+                overflow: hidden;
+                cursor: pointer;
+                transition: border-color 0.15s;
+                background: #f6f7f7;
+            }
+            .pw-feat-grid-item:hover {
+                border-color: #2271b1;
+            }
+            .pw-feat-selected {
+                border-color: #2271b1;
+            }
+            .pw-feat-grid-item img {
+                width: 100%;
+                aspect-ratio: 1;
+                object-fit: cover;
+                display: block;
+            }
+            .pw-feat-check {
+                position: absolute;
+                top: 6px;
+                right: 6px;
+                background: #2271b1;
+                color: #fff;
+                border-radius: 50%;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .pw-feat-item-info {
+                padding: 6px 8px;
+                background: #fff;
+                border-top: 1px solid #f0f0f1;
+            }
+            .pw-feat-item-name {
+                display: block;
+                font-size: 11px;
+                font-weight: 600;
+                color: #3c434a;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+            .pw-feat-item-size {
+                display: block;
+                font-size: 10px;
+                color: #787c82;
+                font-family: monospace;
+            }
+            .pw-feat-upload-zone {
+                border: 2px dashed #dcdcde;
+                border-radius: 8px;
+                padding: 40px 20px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.15s;
+                color: #787c82;
+            }
+            .pw-feat-upload-zone:hover,
+            .pw-feat-dragover {
+                border-color: #2271b1;
+                background: #f0f6fc;
+                color: #1d2327;
+            }
+            .pw-feat-upload-zone p {
+                margin: 8px 0 0;
+                font-size: 13px;
+            }
+            .pw-feat-uploading {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 16px;
+                background: #f0f6fc;
+                border-radius: 6px;
+                margin-top: 12px;
+                font-size: 13px;
+                color: #2271b1;
+            }
+            .hidden {
+                display: none;
+            }
+            </style>
 
             <script>
             document.addEventListener('DOMContentLoaded', function() {
@@ -344,8 +585,34 @@
                         }
                     });
                 }
+
+                var script = document.createElement('script');
+                script.type = 'module';
+                script.src = '/assets/admin/spa/js/featured-image-picker.js';
+                document.body.appendChild(script);
             });
             </script>
+
+        <?php elseif ($activeScreen === 'media-new'): ?>
+
+            <?php
+            $uploadUrl = '/wp-admin/upload.php';
+            ?>
+            <div id="post-body-content">
+                <div class="notice notice-info inline"><p>Upload New Media.</p></div>
+                <div style="background:#fff;border:1px solid #dcdcde;padding:20px;max-width:600px;">
+                    <form action="/api/admin/media/upload" method="post" enctype="multipart/form-data">
+                        <div style="margin-bottom:16px;">
+                            <label style="display:block;font-weight:600;margin-bottom:4px;">Choose files to upload</label>
+                            <input type="file" name="file" multiple style="padding:8px 0;" />
+                        </div>
+                        <p class="submit">
+                            <input type="submit" class="button button-primary" value="Upload" />
+                            <a href="<?= $uploadUrl ?>" class="button" style="margin-left:8px;">Media Library</a>
+                        </p>
+                    </form>
+                </div>
+            </div>
 
         <?php elseif ($activeScreen === 'upload'): ?>
 
