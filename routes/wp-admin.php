@@ -35,6 +35,42 @@ $router->group(['prefix' => '/wp-admin'], function () use ($router) {
     // Media
     $router->get('/upload.php', WpAdminController::class);
     $router->get('/media-new.php', WpAdminController::class);
+    $router->post('/media-upload.php', function () {
+        $file = $_FILES['file'] ?? null;
+        if ($file === null || $file['error'] !== UPLOAD_ERR_OK) {
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'No file uploaded or upload error']);
+            exit;
+        }
+        $now = new \DateTimeImmutable();
+        $year = $now->format('Y');
+        $month = $now->format('m');
+        $subDir = "{$year}/{$month}";
+        $basePath = defined('PW_BASE_PATH') ? PW_BASE_PATH : getcwd();
+        $storageDir = $basePath . '/storage/uploads/' . $subDir;
+        if (!is_dir($storageDir)) {
+            mkdir($storageDir, 0755, true);
+        }
+        $origName = basename($file['name']);
+        $destPath = $storageDir . '/' . $origName;
+        $counter = 1;
+        while (file_exists($destPath)) {
+            $info = pathinfo($origName);
+            $destPath = $storageDir . '/' . $info['filename'] . '-' . $counter . '.' . ($info['extension'] ?? '');
+            $counter++;
+        }
+        if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+            header('Content-Type: application/json');
+            echo json_encode(['error' => 'Failed to save file']);
+            exit;
+        }
+        $filename = basename($destPath);
+        $relativePath = $subDir . '/' . $filename;
+        $url = '/storage/uploads/' . $relativePath;
+        header('Content-Type: application/json');
+        echo json_encode(['url' => $url, 'filename' => $filename]);
+        exit;
+    });
 
     // Pages
     $router->get('/edit-pages.php', WpAdminController::class);

@@ -317,7 +317,7 @@
 
                             <div class="pw-meta-box">
                                 <div class="pw-meta-box-title">Featured Image</div>
-                                <div class="pw-meta-box-inside">
+                                <div class="pw-meta-box-inside" id="pw-feat-image-inside">
                                     <?php if ($postData['featured_image'] !== ''): ?>
                                     <img src="<?= htmlspecialchars($postData['featured_image']) ?>" class="pw-feat-img" style="max-width:100%;height:auto;margin-bottom:8px;border-radius:4px;" />
                                     <?php endif; ?>
@@ -332,243 +332,36 @@
             </div>
 
             <style>
-            .pw-feat-picker-btn {
-                display: inline-flex !important;
-                align-items: center;
-                gap: 4px;
-                font-size: 12px !important;
-            }
-            .pw-feat-picker-preview {
-                position: relative;
-                margin-bottom: 8px;
-                cursor: pointer;
-                border-radius: 4px;
-                overflow: hidden;
-                display: inline-block;
-            }
-            .pw-feat-picker-preview:hover .pw-feat-picker-remove {
-                opacity: 1;
-            }
-            .pw-feat-picker-thumb {
-                max-width: 100%;
-                height: auto;
-                display: block;
-                border-radius: 4px;
-                border: 1px solid #dcdcde;
-            }
-            .pw-feat-picker-remove {
-                position: absolute;
-                top: 4px;
-                right: 4px;
-                background: rgba(0,0,0,0.6);
-                color: #fff;
-                border: none;
-                border-radius: 50%;
-                width: 24px;
-                height: 24px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                opacity: 0;
-                transition: opacity 0.15s;
-            }
-            .pw-feat-picker-remove:hover {
-                background: rgba(214,54,56,0.8);
-            }
-            .pw-feat-modal-overlay {
-                position: fixed;
-                inset: 0;
-                z-index: 100000;
-                background: rgba(0,0,0,0.5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 20px;
-            }
-            .pw-feat-modal {
-                background: #fff;
-                border-radius: 8px;
-                width: 100%;
-                max-width: 640px;
-                max-height: 80vh;
-                display: flex;
-                flex-direction: column;
-                box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            }
-            .pw-feat-modal-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 16px 20px;
-                border-bottom: 1px solid #dcdcde;
-            }
-            .pw-feat-modal-header h2 {
-                margin: 0;
-                font-size: 16px;
-                font-weight: 600;
-            }
-            .pw-feat-modal-close {
-                background: none;
-                border: none;
-                cursor: pointer;
-                color: #787c82;
-                padding: 4px;
-                border-radius: 4px;
-                display: flex;
-            }
-            .pw-feat-modal-close:hover {
-                color: #1d2327;
-                background: #f0f0f1;
-            }
-            .pw-feat-modal-tabs {
-                display: flex;
-                border-bottom: 1px solid #dcdcde;
-                background: #f6f7f7;
-            }
-            .pw-feat-modal-tabs button {
-                flex: 1;
-                padding: 10px 16px;
-                border: none;
-                background: transparent;
-                cursor: pointer;
-                font-size: 13px;
-                font-weight: 500;
-                color: #787c82;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 6px;
-                border-bottom: 2px solid transparent;
-                transition: all 0.1s;
-            }
-            .pw-feat-modal-tabs button:hover {
-                color: #1d2327;
-                background: #fff;
-            }
-            .pw-feat-tab-active {
-                color: #2271b1 !important;
-                border-bottom-color: #2271b1 !important;
-                background: #fff !important;
-            }
-            .pw-feat-modal-body {
-                flex: 1;
-                overflow-y: auto;
-                padding: 16px 20px;
-                min-height: 300px;
-            }
-            .pw-feat-loading,
-            .pw-feat-empty {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                gap: 12px;
-                padding: 60px 20px;
-                color: #787c82;
-            }
-            .pw-feat-empty p {
-                margin: 0;
-                font-size: 13px;
-            }
-            .pw-feat-spin {
-                animation: pw-spin 1s linear infinite;
-            }
-            @keyframes pw-spin {
-                to { transform: rotate(360deg); }
-            }
-            .pw-feat-grid {
-                display: grid;
-                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-                gap: 12px;
-            }
-            .pw-feat-grid-item {
-                position: relative;
-                border: 2px solid #dcdcde;
-                border-radius: 6px;
-                overflow: hidden;
-                cursor: pointer;
-                transition: border-color 0.15s;
-                background: #f6f7f7;
-            }
-            .pw-feat-grid-item:hover {
-                border-color: #2271b1;
-            }
-            .pw-feat-selected {
-                border-color: #2271b1;
-            }
-            .pw-feat-grid-item img {
-                width: 100%;
-                aspect-ratio: 1;
-                object-fit: cover;
-                display: block;
-            }
-            .pw-feat-check {
-                position: absolute;
-                top: 6px;
-                right: 6px;
-                background: #2271b1;
-                color: #fff;
-                border-radius: 50%;
-                width: 24px;
-                height: 24px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-            .pw-feat-item-info {
-                padding: 6px 8px;
-                background: #fff;
-                border-top: 1px solid #f0f0f1;
-            }
-            .pw-feat-item-name {
-                display: block;
-                font-size: 11px;
-                font-weight: 600;
-                color: #3c434a;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-            .pw-feat-item-size {
-                display: block;
-                font-size: 10px;
-                color: #787c82;
-                font-family: monospace;
-            }
-            .pw-feat-upload-zone {
-                border: 2px dashed #dcdcde;
-                border-radius: 8px;
-                padding: 40px 20px;
-                text-align: center;
-                cursor: pointer;
-                transition: all 0.15s;
-                color: #787c82;
-            }
-            .pw-feat-upload-zone:hover,
-            .pw-feat-dragover {
-                border-color: #2271b1;
-                background: #f0f6fc;
-                color: #1d2327;
-            }
-            .pw-feat-upload-zone p {
-                margin: 8px 0 0;
-                font-size: 13px;
-            }
-            .pw-feat-uploading {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                padding: 12px 16px;
-                background: #f0f6fc;
-                border-radius: 6px;
-                margin-top: 12px;
-                font-size: 13px;
-                color: #2271b1;
-            }
-            .hidden {
-                display: none;
-            }
+            .pw-feat-preview-wrap { margin-bottom:8px; display:inline-block; position:relative; }
+            .pw-feat-hidden { display:none !important; }
+            .pw-feat-picker-thumb { max-width:100%; height:auto; display:block; border-radius:4px; border:1px solid #dcdcde; }
+            .pw-feat-remove-btn { position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.6); color:#fff; border:none; border-radius:50%; width:24px; height:24px; font-size:16px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.15s; }
+            .pw-feat-preview-wrap:hover .pw-feat-remove-btn { opacity:1; }
+            .pw-feat-remove-btn:hover { background:rgba(214,54,56,0.8); }
+            .pw-feat-picker-btn { font-size:12px !important; }
+            .pw-feat-modal-overlay { position:fixed; inset:0; z-index:100000; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; padding:20px; }
+            .pw-feat-modal { background:#fff; border-radius:8px; width:100%; max-width:640px; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,0.3); }
+            .pw-feat-modal-header { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid #dcdcde; }
+            .pw-feat-modal-header h2 { margin:0; font-size:16px; font-weight:600; }
+            .pw-feat-modal-close { background:none; border:none; cursor:pointer; color:#787c82; padding:4px 8px; font-size:18px; border-radius:4px; }
+            .pw-feat-modal-close:hover { color:#1d2327; background:#f0f0f1; }
+            .pw-feat-modal-tabs { display:flex; border-bottom:1px solid #dcdcde; background:#f6f7f7; }
+            .pw-feat-modal-tabs button { flex:1; padding:10px 16px; border:none; background:transparent; cursor:pointer; font-size:13px; font-weight:500; color:#787c82; border-bottom:2px solid transparent; transition:all 0.1s; }
+            .pw-feat-modal-tabs button:hover { color:#1d2327; background:#fff; }
+            .pw-feat-tab-active { color:#2271b1 !important; border-bottom-color:#2271b1 !important; background:#fff !important; }
+            .pw-feat-modal-body { flex:1; overflow-y:auto; padding:16px 20px; min-height:300px; }
+            .pw-feat-loading, .pw-feat-empty { display:flex; align-items:center; justify-content:center; padding:60px 20px; color:#787c82; font-size:13px; }
+            .pw-feat-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; }
+            .pw-feat-grid-item { position:relative; border:2px solid #dcdcde; border-radius:6px; overflow:hidden; cursor:pointer; transition:border-color 0.15s; background:#f6f7f7; }
+            .pw-feat-grid-item:hover { border-color:#2271b1; }
+            .pw-feat-grid-item img { width:100%; aspect-ratio:1; object-fit:cover; display:block; }
+            .pw-feat-item-info { padding:6px 8px; background:#fff; border-top:1px solid #f0f0f1; }
+            .pw-feat-item-name { display:block; font-size:11px; font-weight:600; color:#3c434a; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+            .pw-feat-item-size { display:block; font-size:10px; color:#787c82; font-family:monospace; }
+            .pw-feat-upload-zone { border:2px dashed #dcdcde; border-radius:8px; padding:40px 20px; text-align:center; cursor:pointer; color:#787c82; transition:all 0.15s; }
+            .pw-feat-upload-zone:hover, .pw-feat-dragover { border-color:#2271b1; background:#f0f6fc; color:#1d2327; }
+            .pw-feat-upload-zone p { margin:8px 0 0; font-size:13px; }
+            .pw-feat-uploading { display:flex; align-items:center; gap:8px; padding:12px 16px; background:#f0f6fc; border-radius:6px; margin-top:12px; font-size:13px; color:#2271b1; }
             </style>
 
             <script>
@@ -586,10 +379,227 @@
                     });
                 }
 
-                var script = document.createElement('script');
-                script.type = 'module';
-                script.src = '/assets/admin/spa/js/featured-image-picker.js';
-                document.body.appendChild(script);
+                (function() {
+                    var mount = document.getElementById('featured-image-picker');
+                    if (!mount) return;
+
+                    var input = document.querySelector('input[name="featured_image"]');
+                    var previewImg = document.querySelector('.pw-feat-img');
+
+                    function render() {
+                        var currentUrl = input ? input.value : '';
+
+                        mount.innerHTML =
+                            '<div class="pw-feat-preview-wrap' + (currentUrl ? '' : ' pw-feat-hidden') + '">' +
+                                '<img src="' + escapeHtml(currentUrl) + '" class="pw-feat-picker-thumb" />' +
+                                '<button type="button" class="pw-feat-remove-btn" title="Remove featured image">&times;</button>' +
+                            '</div>' +
+                            '<button type="button" class="button pw-feat-picker-btn" id="pw-feat-open-btn">' +
+                                (currentUrl ? 'Replace Image' : 'Set featured image') +
+                            '</button>';
+                    }
+
+                    function escapeHtml(s) {
+                        if (!s) return '';
+                        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+                    }
+
+                    render();
+
+                    function setFeaturedImage(url) {
+                        if (input) {
+                            input.value = url;
+                            input.dispatchEvent(new Event('change', { bubbles: true }));
+                        }
+                        if (previewImg) {
+                            if (url) {
+                                previewImg.src = url;
+                                previewImg.style.display = '';
+                            } else {
+                                previewImg.src = '';
+                                previewImg.style.display = 'none';
+                            }
+                        }
+                        render();
+                    }
+
+                    mount.addEventListener('click', function(e) {
+                        if (e.target.closest('.pw-feat-remove-btn')) {
+                            setFeaturedImage('');
+                            return;
+                        }
+                        if (e.target.id === 'pw-feat-open-btn') {
+                            openModal();
+                        }
+                    });
+
+                    function openModal() {
+                        var overlay = document.createElement('div');
+                        overlay.className = 'pw-feat-modal-overlay';
+                        overlay.innerHTML =
+                            '<div class="pw-feat-modal">' +
+                                '<div class="pw-feat-modal-header">' +
+                                    '<h2>Featured Image</h2>' +
+                                    '<button type="button" class="pw-feat-modal-close" id="pw-modal-close">&times;</button>' +
+                                '</div>' +
+                                '<div class="pw-feat-modal-tabs">' +
+                                    '<button type="button" class="pw-feat-tab pw-feat-tab-active" data-tab="library">Media Library</button>' +
+                                    '<button type="button" class="pw-feat-tab" data-tab="upload">Upload</button>' +
+                                '</div>' +
+                                '<div class="pw-feat-modal-body" id="pw-modal-body">' +
+                                    '<div class="pw-feat-loading" id="pw-modal-loading">Loading media...</div>' +
+                                '</div>' +
+                            '</div>';
+                        document.body.appendChild(overlay);
+
+                        var bodyEl = document.getElementById('pw-modal-body');
+                        var currentTab = 'library';
+
+                        overlay.addEventListener('click', function(e) {
+                            if (e.target === overlay) closeModal(overlay);
+                        });
+
+                        document.getElementById('pw-modal-close').addEventListener('click', function() {
+                            closeModal(overlay);
+                        });
+
+                        overlay.querySelectorAll('.pw-feat-tab').forEach(function(btn) {
+                            btn.addEventListener('click', function() {
+                                overlay.querySelectorAll('.pw-feat-tab').forEach(function(b) { b.classList.remove('pw-feat-tab-active'); });
+                                btn.classList.add('pw-feat-tab-active');
+                                currentTab = btn.getAttribute('data-tab');
+                                if (currentTab === 'library') loadMediaGrid(bodyEl, overlay);
+                                else showUploadTab(bodyEl, overlay);
+                            });
+                        });
+
+                        loadMediaGrid(bodyEl, overlay);
+                    }
+
+                    function closeModal(overlay) {
+                        if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
+                    }
+
+                    function loadMediaGrid(container, overlay) {
+                        container.innerHTML = '<div class="pw-feat-loading">Loading media...</div>';
+                        fetch('/api/admin/media')
+                            .then(function(r) { return r.json(); })
+                            .then(function(items) {
+                                var images = items.filter(function(i) { return i.mimeType && i.mimeType.startsWith('image/'); });
+                                if (images.length === 0) {
+                                    container.innerHTML = '<div class="pw-feat-empty"><p>No media items found. Upload an image first.</p></div>';
+                                    return;
+                                }
+                                var html = '<div class="pw-feat-grid">';
+                                images.forEach(function(item) {
+                                    var thumb = item.thumbnailUrl || item.url;
+                                    html +=
+                                        '<div class="pw-feat-grid-item" data-url="' + escapeHtml(item.url) + '">' +
+                                            '<img src="' + escapeHtml(thumb) + '" alt="' + escapeHtml(item.title) + '" loading="lazy" />' +
+                                            '<div class="pw-feat-item-info">' +
+                                                '<span class="pw-feat-item-name">' + escapeHtml(item.title) + '</span>' +
+                                                '<span class="pw-feat-item-size">' + formatSize(item.size) + '</span>' +
+                                            '</div>' +
+                                        '</div>';
+                                });
+                                html += '</div>';
+                                container.innerHTML = html;
+
+                                container.querySelectorAll('.pw-feat-grid-item').forEach(function(item) {
+                                    item.addEventListener('click', function() {
+                                        var url = item.getAttribute('data-url');
+                                        setFeaturedImage(url);
+                                        closeModal(overlay);
+                                    });
+                                });
+                            })
+                            .catch(function() {
+                                container.innerHTML = '<div class="pw-feat-empty"><p>Failed to load media library.</p></div>';
+                            });
+                    }
+
+                    function showUploadTab(container, overlay) {
+                        container.innerHTML =
+                            '<div class="pw-feat-upload-zone" id="pw-upload-zone">' +
+                                '<p>Drop an image here or click to browse</p>' +
+                                '<input type="file" accept="image/*" id="pw-upload-input" style="display:none" />' +
+                            '</div>' +
+                            '<div class="pw-feat-uploading pw-feat-hidden" id="pw-upload-progress">Uploading...</div>';
+
+                        var zone = document.getElementById('pw-upload-zone');
+                        var fileInput = document.getElementById('pw-upload-input');
+                        var progress = document.getElementById('pw-upload-progress');
+
+                        zone.addEventListener('click', function() { fileInput.click(); });
+                        zone.addEventListener('dragover', function(e) { e.preventDefault(); zone.classList.add('pw-feat-dragover'); });
+                        zone.addEventListener('dragleave', function() { zone.classList.remove('pw-feat-dragover'); });
+                        zone.addEventListener('drop', function(e) {
+                            e.preventDefault();
+                            zone.classList.remove('pw-feat-dragover');
+                            var file = e.dataTransfer.files[0];
+                            if (file) uploadAndSelect(file, container, overlay);
+                        });
+                        fileInput.addEventListener('change', function() {
+                            if (fileInput.files[0]) uploadAndSelect(fileInput.files[0], container, overlay);
+                        });
+                    }
+
+                    function uploadAndSelect(file, container, overlay) {
+                        if (!file.type.startsWith('image/')) return;
+                        var maxSize = 2 * 1024 * 1024; // 2MB (PHP upload_max_filesize)
+                        if (file.size > maxSize) {
+                            alert('File too large. Maximum size is 2MB. Please increase upload_max_filesize and post_max_size in php.ini for larger files.');
+                            return;
+                        }
+                        var progress = document.getElementById('pw-upload-progress');
+                        if (progress) progress.classList.remove('pw-feat-hidden');
+
+                        var formData = new FormData();
+                        formData.append('file', file, file.name);
+
+                        var xhr = new XMLHttpRequest();
+                        xhr.open('POST', '/wp-admin/media-upload.php', true);
+                        xhr.onload = function() {
+                            if (xhr.status === 200) {
+                                try {
+                                    var result = JSON.parse(xhr.responseText);
+                                    if (result && result.url) {
+                                        setFeaturedImage(result.url);
+                                        closeModal(overlay);
+                                        return;
+                                    }
+                                } catch(e) {}
+                                if (progress) progress.textContent = 'Invalid response.';
+                            } else {
+                                var msg = 'Upload failed (HTTP ' + xhr.status + ')';
+                                try {
+                                    var err = JSON.parse(xhr.responseText);
+                                    if (err && err.error) msg = err.error;
+                                } catch(e) {}
+                                if (progress) progress.textContent = msg;
+                            }
+                        };
+                        xhr.onerror = function() {
+                            if (progress) progress.textContent = 'Network error.';
+                        };
+                        xhr.send(formData);
+                    }
+
+                    function formatSize(bytes) {
+                        if (bytes === 0) return '0 B';
+                        var k = 1024;
+                        var sizes = ['B', 'KB', 'MB', 'GB'];
+                        var i = Math.floor(Math.log(bytes) / Math.log(k));
+                        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+                    }
+
+                    document.addEventListener('keydown', function(e) {
+                        if (e.key === 'Escape') {
+                            var ov = document.querySelector('.pw-feat-modal-overlay');
+                            if (ov) closeModal(ov);
+                        }
+                    });
+                })();
             });
             </script>
 
