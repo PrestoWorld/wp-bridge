@@ -141,42 +141,41 @@ $__screenUrl = function (string $screenId) use ($__screenUrlMap): string {
         #adminmenu .menu-top.wp-has-current-submenu .wp-menu-icon-placeholder { background: #72aee6; }
         #adminmenu .wp-menu-name { padding: 0; }
 
-        /* Submenu — hidden by default, shown on hover or when parent is active */
+        /* Submenu — flyout to the right */
         #adminmenu .wp-submenu {
-            display: none; list-style: none; margin: 0; padding: 4px 0 8px;
-            background: #2c3338; font-size: 13px;
-            border-radius: 0 0 4px 4px;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+            display: none; list-style: none; margin: 0; padding: 6px 0;
+            position: absolute; left: 100%; top: 0; z-index: 999;
+            min-width: 200px;
+            background: #1d2327; font-size: 13px;
+            border-radius: 0 4px 4px 4px;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            border-left: 2px solid #2271b1;
         }
-        #adminmenu .wp-has-current-submenu .wp-submenu { display: block; }
         #adminmenu li.menu-top:hover .wp-submenu { display: block; }
         #adminmenu .wp-submenu-head { display: none; }
         #adminmenu .wp-submenu li { border: none; margin: 0; }
         #adminmenu .wp-submenu a {
-            display: block; padding: 5px 12px 5px 28px; color: #9ca2a7; text-decoration: none;
+            display: block; padding: 6px 16px; color: #9ca2a7; text-decoration: none;
             font-size: 13px; line-height: 1.5; transition: color 0.1s;
-            border-left: 2px solid transparent;
+            white-space: nowrap;
         }
         #adminmenu .wp-submenu a:hover {
-            color: #72aee6; border-left-color: #72aee6;
+            color: #72aee6;
             background: rgba(114, 174, 230, 0.04);
         }
         #adminmenu .wp-submenu li.current a {
             color: #fff; font-weight: 600;
-            border-left-color: #72aee6;
             background: rgba(255,255,255,0.03);
         }
 
         /* Submenu arrow indicator */
         #adminmenu .wp-submenu-arrow {
             position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-            font-size: 10px; color: #5c636a; transition: transform 0.15s, color 0.15s;
+            font-size: 10px; color: #787c82; transition: transform 0.15s, color 0.15s;
             line-height: 1;
         }
         #adminmenu .wp-has-current-submenu .wp-submenu-arrow { color: #72aee6; }
         #adminmenu li.menu-top:hover .wp-submenu-arrow { color: #c3c4c7; }
-        #adminmenu .wp-has-current-submenu .wp-submenu-arrow,
-        #adminmenu li.menu-top:hover .wp-submenu-arrow { transform: translateY(-50%) rotate(180deg); }
 
         /* ── Content Area ───────────────────────────────── */
         #wpcontent { flex: 1; margin-left: 0; min-width: 0; position: relative; }
