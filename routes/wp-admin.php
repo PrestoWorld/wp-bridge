@@ -13,11 +13,6 @@ use App\Http\Controllers\Admin\SettingsController;
 
 /** @var \App\Http\Routing\Contracts\RouterInterface $router */
 
-$router->get('/wp-admin', function () {
-    header('Location: /wp-admin/');
-    exit;
-});
-
 $router->group(['prefix' => '/wp-admin'], function () use ($router) {
     // Dashboard
     $router->get('', WpAdminController::class);
