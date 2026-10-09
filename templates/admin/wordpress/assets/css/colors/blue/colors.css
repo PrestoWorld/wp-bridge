@@ -14,26 +14,16 @@
  * This function name uses British English to maintain backward compatibility, as developers
  * may use the function in their own admin CSS files. See #56811.
  */
-
-/* WordPress 6.9+ design system tokens */
-:root {
-	--wp-admin-theme-color: #3858e9;
-	--wp-admin-theme-color--rgb: 56, 88, 233;
-	--wp-admin-theme-color-darker-10: #2145e6;
-	--wp-admin-theme-color-darker-20: #183ad6;
-	--wp-admin-border-width-focus: 1.5px;
-}
-
 body {
   background: #f0f0f0;
 }
 
 /* Links */
 a {
-  color: var(--wp-admin-theme-color);
+  color: #0073aa;
 }
 a:hover, a:active, a:focus {
-  color: var(--wp-admin-theme-color-darker-20);
+  color: rgb(0, 149.5, 221);
 }
 
 #post-body .misc-pub-post-status:before,

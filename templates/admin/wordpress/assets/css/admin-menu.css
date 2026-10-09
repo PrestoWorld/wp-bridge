@@ -104,7 +104,7 @@
 #adminmenu li.menu-top > a:focus,
 #adminmenu .wp-submenu a:hover,
 #adminmenu .wp-submenu a:focus {
-	color: var(--wp-admin-theme-color, #3858e9);
+	color: #72aee6;
 }
 
 #adminmenu a:hover,
@@ -170,7 +170,7 @@
 #adminmenu li > a.menu-top:focus {
 	position: relative;
 	background-color: #1d2327;
-	color: var(--wp-admin-theme-color, #3858e9);
+	color: #72aee6;
 }
 
 .folded #adminmenu li.menu-top:hover,
@@ -182,7 +182,7 @@
 #adminmenu li.wp-has-current-submenu a.wp-has-current-submenu,
 #adminmenu li.current a.menu-top,
 #adminmenu .wp-has-current-submenu .wp-submenu .wp-submenu-head {
-	background: var(--wp-admin-theme-color, #3858e9);
+	background: #2271b1;
 	color: #fff;
 }
 
@@ -313,7 +313,7 @@ div.wp-menu-image:before {
 #adminmenu li:hover div.wp-menu-image:before,
 #adminmenu li a:focus div.wp-menu-image:before,
 #adminmenu li.opensub div.wp-menu-image:before {
-	color: var(--wp-admin-theme-color, #3858e9);
+	color: #72aee6;
 }
 
 .folded #adminmenu div.wp-menu-image {

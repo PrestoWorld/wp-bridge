@@ -93,7 +93,7 @@ $__cssFiles = [
     <link rel="stylesheet" id="colors-css" href="<?= $__assetBase ?>/colors/blue/colors.css" type="text/css" media="all" />
 
     <style>
-        /* PrestoWorld bridge overrides — WordPress 6.9+ design system */
+        /* PrestoWorld bridge overrides — WordPress 7.1.3 design system */
         :root {
             --wp-admin-theme-color: #3858e9;
             --wp-admin-theme-color--rgb: 56, 88, 233;
@@ -140,7 +140,7 @@ $__cssFiles = [
         #adminmenu li:hover div.wp-menu-image .dashicons-before,
         #adminmenu li a:focus div.wp-menu-image .dashicons-before,
         #adminmenu li.opensub div.wp-menu-image .dashicons-before {
-            color: var(--wp-admin-theme-color);
+            color: #72aee6;
         }
         /* Active/current menu icon */
         #adminmenu li.wp-has-current-submenu:hover div.wp-menu-image .dashicons-before,
@@ -211,21 +211,21 @@ $__cssFiles = [
         #adminmenu li > a.menu-top:focus {
             position: relative;
             background-color: #1d2327;
-            color: var(--wp-admin-theme-color);
+            color: #72aee6;
         }
 
         /* Current menu item */
         #adminmenu li.wp-has-current-submenu a.wp-has-current-submenu,
         #adminmenu li.current a.menu-top,
         #adminmenu .wp-has-current-submenu .wp-submenu .wp-submenu-head {
-            background: var(--wp-admin-theme-color);
+            background: #2271b1;
             color: #fff;
         }
 
         /* Submenu item hover */
         #adminmenu .wp-submenu a:hover,
         #adminmenu .wp-submenu a:focus {
-            color: var(--wp-admin-theme-color);
+            color: #72aee6;
             box-shadow: inset 4px 0 0 0 currentColor;
             transition: box-shadow .1s linear;
         }
