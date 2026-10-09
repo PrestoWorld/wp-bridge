@@ -102,6 +102,15 @@ html:lang(he-il) .rtl #wpadminbar * {
 	outline: 1px solid transparent;
 }
 
+/* WordPress 6.9+ design system tokens */
+:root {
+	--wp-admin-theme-color: #3858e9;
+	--wp-admin-theme-color--rgb: 56, 88, 233;
+	--wp-admin-theme-color-darker-10: #2145e6;
+	--wp-admin-theme-color-darker-20: #183ad6;
+	--wp-admin-border-width-focus: 1.5px;
+}
+
 /* Dashicons in admin bar */
 #wpadminbar .ab-icon.dashicons-before {
 	display: inline-block;
@@ -125,7 +134,7 @@ html:lang(he-il) .rtl #wpadminbar * {
 /* Admin bar icon hover */
 #wpadminbar .quicklinks .menupop > a.ab-item:hover .ab-icon.dashicons-before,
 #wpadminbar .quicklinks .menupop > a.ab-item:focus .ab-icon.dashicons-before {
-	color: #72aee6;
+	color: var(--wp-admin-theme-color);
 }
 
 /* WP logo icon */
@@ -135,7 +144,7 @@ html:lang(he-il) .rtl #wpadminbar * {
 
 #wpadminbar #wp-admin-bar-wp-logo:hover .ab-icon.dashicons-before,
 #wpadminbar #wp-admin-bar-wp-logo:focus .ab-icon.dashicons-before {
-	color: #72aee6;
+	color: var(--wp-admin-theme-color);
 }
 
 #wpadminbar .ab-sub-wrapper,

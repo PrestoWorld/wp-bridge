@@ -93,7 +93,15 @@ $__cssFiles = [
     <link rel="stylesheet" id="colors-css" href="<?= $__assetBase ?>/colors/blue/colors.css" type="text/css" media="all" />
 
     <style>
-        /* PrestoWorld bridge overrides — minimal, keeps nibitour look intact */
+        /* PrestoWorld bridge overrides — WordPress 6.9+ design system */
+        :root {
+            --wp-admin-theme-color: #3858e9;
+            --wp-admin-theme-color--rgb: 56, 88, 233;
+            --wp-admin-theme-color-darker-10: #2145e6;
+            --wp-admin-theme-color-darker-20: #183ad6;
+            --wp-admin-border-width-focus: 1.5px;
+        }
+
         #wpadminbar {
             position: fixed;
             top: 0;
@@ -132,7 +140,7 @@ $__cssFiles = [
         #adminmenu li:hover div.wp-menu-image .dashicons-before,
         #adminmenu li a:focus div.wp-menu-image .dashicons-before,
         #adminmenu li.opensub div.wp-menu-image .dashicons-before {
-            color: #72aee6;
+            color: var(--wp-admin-theme-color);
         }
         /* Active/current menu icon */
         #adminmenu li.wp-has-current-submenu:hover div.wp-menu-image .dashicons-before,
@@ -203,21 +211,21 @@ $__cssFiles = [
         #adminmenu li > a.menu-top:focus {
             position: relative;
             background-color: #1d2327;
-            color: #72aee6;
+            color: var(--wp-admin-theme-color);
         }
 
         /* Current menu item */
         #adminmenu li.wp-has-current-submenu a.wp-has-current-submenu,
         #adminmenu li.current a.menu-top,
         #adminmenu .wp-has-current-submenu .wp-submenu .wp-submenu-head {
-            background: #2271b1;
+            background: var(--wp-admin-theme-color);
             color: #fff;
         }
 
         /* Submenu item hover */
         #adminmenu .wp-submenu a:hover,
         #adminmenu .wp-submenu a:focus {
-            color: #72aee6;
+            color: var(--wp-admin-theme-color);
             box-shadow: inset 4px 0 0 0 currentColor;
             transition: box-shadow .1s linear;
         }
