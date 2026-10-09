@@ -54,7 +54,10 @@ $__screenUrl = function (string $screenId) use ($__screenUrlMap): string {
 };
 
 $__assetBase = '/wp-admin/assets/css';
+$__fontBase = '/wp-admin/assets/fonts';
 $__cssFiles = [
+    'dashicons.css',
+    'admin-bar.css',
     'common.css',
     'forms.css',
     'admin-menu.css',

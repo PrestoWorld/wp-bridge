@@ -162,3 +162,31 @@ $router->get('/wp-admin/assets/css/colors/{theme}/{file}', function (Request $re
         ['Content-Type' => 'text/css; charset=utf-8']
     );
 });
+
+/**
+ * Serve the dashicons font files from the vendor package.
+ */
+$router->get('/wp-admin/assets/fonts/{file}', function (Request $request, string $file) {
+    if (!preg_match('/^dashicons\.(eot|svg|ttf|woff|woff2)$/i', $file)) {
+        return Response::json(['error' => 'Invalid file'], 400);
+    }
+    $path = __DIR__ . '/../templates/admin/wordpress/assets/fonts/' . $file;
+    if (!file_exists($path)) {
+        return Response::json(['error' => 'Not found'], 404);
+    }
+
+    $mimeTypes = [
+        'eot'   => 'application/vnd.ms-fontobject',
+        'svg'   => 'image/svg+xml',
+        'ttf'   => 'font/ttf',
+        'woff'  => 'font/woff',
+        'woff2' => 'font/woff2',
+    ];
+    $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+    return new Response(
+        (string) file_get_contents($path),
+        200,
+        ['Content-Type' => $mimeTypes[$ext] ?? 'application/octet-stream']
+    );
+});
