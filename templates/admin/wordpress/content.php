@@ -6,70 +6,117 @@
  * @var array  $user
  */
 ?>
-<div id="poststuff">
-    <div id="post-body" class="metabox-holder columns-2">
+<?php if ($activeScreen === 'dashboard'): ?>
 
-        <?php if ($activeScreen === 'dashboard'): ?>
+    <?php
+    $db = app(\Cycle\Database\DatabaseInterface::class);
+    $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
+    try {
+        $postCount = (int) $db->select()->from($pfx . 'posts')->where('status', '!=', 'auto-draft')->count();
+        $pageCount = (int) $db->select()->from($pfx . 'posts')->where('post_type', 'page')->where('status', '!=', 'auto-draft')->count();
+        $userCount = (int) $db->select()->from($pfx . 'users')->count();
+        $commentCount = (int) $db->select()->from($pfx . 'comments')->count();
+    } catch (\Throwable) {
+        $postCount = $pageCount = $userCount = $commentCount = 0;
+    }
+    ?>
 
-            <div id="post-body-content">
-                <div id="dashboard-widgets-wrap">
-                    <div id="dashboard-widgets" class="metabox-holder">
-                        <?php
-                        $cols = [1 => [], 2 => []];
-                        foreach ($widgets as $w) {
-                            $col = $w['props']['column'] ?? 1;
-                            $cols[$col][] = $w;
-                        }
-                        foreach ([1, 2] as $colIdx):
-                        ?>
-                        <div class="postbox-container" style="width:49%;<?= $colIdx === 2 ? 'float:right;' : '' ?>">
-                            <?php foreach ($cols[$colIdx] as $widget):
-                                $widgetId = $widget['id'] ?? '';
-                                $widgetTitle = $widget['title'] ?? '';
-                                $widgetContent = $widget['props']['content'] ?? '';
-                            ?>
-                            <div class="postbox" id="<?= htmlspecialchars($widgetId) ?>">
-                                <div class="postbox-header">
-                                    <h2 class="hndle ui-sortable-handle">
-                                        <span><?= htmlspecialchars($widgetTitle) ?></span>
-                                    </h2>
-                                </div>
-                                <div class="inside">
-                                    <?= $widgetContent ?>
-                                </div>
+    <div id="dashboard-widgets-wrap">
+        <div id="dashboard-widgets" class="metabox-holder">
+
+            <div class="postbox-container">
+                <div class="meta-box-sortables">
+                    <div class="postbox" id="dashboard_right_now">
+                        <div class="postbox-header">
+                            <h2 class="hndle ui-sortable-handle"><span>At a Glance</span></h2>
+                        </div>
+                        <div class="inside">
+                            <div class="main">
+                                <ul>
+                                    <li class="page-count"><a href="/wp-admin/edit-pages.php"><?= $pageCount ?> Pages</a></li>
+                                    <li class="post-count"><a href="/wp-admin/edit.php"><?= $postCount ?> Posts</a></li>
+                                    <li class="user-count"><a href="/wp-admin/users.php"><?= $userCount ?> Users</a></li>
+                                    <li class="comment-count"><a href="/wp-admin/edit-comments.php"><?= $commentCount ?> Comments</a></li>
+                                </ul>
+                                <p class="sub">
+                                    <a href="/wp-admin/edit.php">Posts</a> &bull;
+                                    <a href="/wp-admin/edit-pages.php">Pages</a> &bull;
+                                    <a href="/wp-admin/users.php">Users</a> &bull;
+                                    <a href="/wp-admin/edit-comments.php">Comments</a>
+                                </p>
                             </div>
-                            <?php endforeach; ?>
+                        </div>
+                    </div>
+
+                    <div class="postbox" id="dashboard_activity">
+                        <div class="postbox-header">
+                            <h2 class="hndle ui-sortable-handle"><span>Activity</span></h2>
+                        </div>
+                        <div class="inside">
+                            <p>No activity yet.</p>
+                        </div>
+                    </div>
+
+                    <div class="postbox" id="dashboard_quick_press">
+                        <div class="postbox-header">
+                            <h2 class="hndle ui-sortable-handle"><span>Quick Draft</span></h2>
+                        </div>
+                        <div class="inside">
+                            <form action="/wp-admin/post-new.php" method="get">
+                                <p class="description">Quickly draft a new post.</p>
+                                <input type="text" name="title" placeholder="Title" style="width:100%;margin-bottom:6px;" />
+                                <textarea name="content" rows="3" placeholder="Content" style="width:100%;"></textarea>
+                                <p class="submit"><input type="submit" class="button button-primary" value="Save Draft" /></p>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="postbox-container">
+                <div class="meta-box-sortables">
+                    <?php
+                    $cols = [1 => [], 2 => []];
+                    foreach ($widgets as $w) {
+                        $col = $w['props']['column'] ?? 1;
+                        $cols[$col][] = $w;
+                    }
+                    foreach ([1, 2] as $colIdx):
+                    ?>
+                    <div class="postbox-container-<?= $colIdx ?>">
+                        <?php foreach ($cols[$colIdx] as $widget):
+                            $widgetId = $widget['id'] ?? '';
+                            $widgetTitle = $widget['title'] ?? '';
+                            $widgetContent = $widget['props']['content'] ?? '';
+                        ?>
+                        <div class="postbox" id="<?= htmlspecialchars($widgetId) ?>">
+                            <div class="postbox-header">
+                                <h2 class="hndle ui-sortable-handle">
+                                    <span><?= htmlspecialchars($widgetTitle) ?></span>
+                                </h2>
+                            </div>
+                            <div class="inside">
+                                <?= $widgetContent ?>
+                            </div>
                         </div>
                         <?php endforeach; ?>
                     </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
 
-            <div id="postbox-container-1" class="postbox-container side">
-                <div class="postbox" id="dashboard-right-now">
-                    <div class="postbox-header">
-                        <h2 class="hndle ui-sortable-handle"><span>At a Glance</span></h2>
-                    </div>
-                    <div class="inside">
-                        <div class="main">
-                            <?php
-                            $db = app(\Cycle\Database\DatabaseInterface::class);
-                            $pfx = getenv('PW_TABLE_PREFIX') ?: 'wp_';
-                            $postCount = $db->select()->from($pfx . 'posts')->where('status', '!=', 'auto-draft')->count();
-                            $userCount = $db->select()->from($pfx . 'users')->count();
-                            $commentCount = $db->select()->from($pfx . 'comments')->count();
-                            ?>
-                            <ul style="list-style:none;margin:0;padding:0;">
-                                <li style="padding:4px 0;"><strong><?= $postCount ?></strong> Posts</li>
-                                <li style="padding:4px 0;"><strong><?= $userCount ?></strong> Users</li>
-                                <li style="padding:4px 0;"><strong><?= $commentCount ?></strong> Comments</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        </div>
+    </div>
 
-        <?php elseif ($activeScreen === 'posts'): ?>
+<?php else: ?>
+
+<div id="poststuff">
+    <div id="post-body" class="metabox-holder columns-2">
+        <div id="post-body-content">
+
+<?php endif; ?>
+
+<?php if ($activeScreen === 'posts'): ?>
 
             <?php
             $db = app(\Cycle\Database\DatabaseInterface::class);

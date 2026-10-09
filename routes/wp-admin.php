@@ -10,8 +10,13 @@ declare(strict_types=1);
 use PrestoWorld\Bridge\WordPress\Admin\Controllers\WpAdminController;
 use App\Http\Controllers\Admin\AdminApiController;
 use App\Http\Controllers\Admin\SettingsController;
+use Witals\Framework\Http\Request;
+use Witals\Framework\Http\Response;
 
 /** @var \App\Http\Routing\Contracts\RouterInterface $router */
+
+// Canonical dashboard URL without trailing slash
+$router->get('/wp-admin', WpAdminController::class);
 
 $router->group(['prefix' => '/wp-admin'], function () use ($router) {
     // Dashboard
@@ -121,4 +126,39 @@ $router->group(['prefix' => '/wp-admin'], function () use ($router) {
     // AJAX
     $router->get('/admin-ajax.php', [WpAdminController::class, 'adminAjax']);
     $router->post('/admin-ajax.php', [WpAdminController::class, 'adminAjax']);
+});
+
+/**
+ * Serve the WordPress admin CSS (from the nibitour.vn look) directly
+ * out of the vendor package — no files are cloned into public/.
+ * Routed through /wp-admin/ so the PHP router handles it.
+ */
+$router->get('/wp-admin/assets/css/{file}', function (Request $request, string $file) {
+    if (!preg_match('/^[a-z0-9._-]+\.css$/i', $file)) {
+        return Response::json(['error' => 'Invalid file'], 400);
+    }
+    $path = __DIR__ . '/../templates/admin/wordpress/assets/css/' . $file;
+    if (!file_exists($path)) {
+        return Response::json(['error' => 'Not found'], 404);
+    }
+    return new Response(
+        (string) file_get_contents($path),
+        200,
+        ['Content-Type' => 'text/css; charset=utf-8']
+    );
+});
+
+$router->get('/wp-admin/assets/css/colors/{theme}/{file}', function (Request $request, string $theme, string $file) {
+    if (!preg_match('/^[a-z0-9._-]+$/i', $theme) || !preg_match('/^[a-z0-9._-]+\.css$/i', $file)) {
+        return Response::json(['error' => 'Invalid file'], 400);
+    }
+    $path = __DIR__ . '/../templates/admin/wordpress/assets/css/colors/' . $theme . '/' . $file;
+    if (!file_exists($path)) {
+        return Response::json(['error' => 'Not found'], 404);
+    }
+    return new Response(
+        (string) file_get_contents($path),
+        200,
+        ['Content-Type' => 'text/css; charset=utf-8']
+    );
 });

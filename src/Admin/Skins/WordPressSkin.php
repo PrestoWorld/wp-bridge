@@ -74,6 +74,39 @@ class WordPressSkin implements SkinInterface
         return SkinInterface::MODE_SSR;
     }
 
+    public function getAssets(): array
+    {
+        $base = '/wp-admin/assets/css';
+        $files = [
+            'common.css',
+            'forms.css',
+            'admin-menu.css',
+            'dashboard.css',
+            'list-tables.css',
+            'edit.css',
+            'revisions.css',
+            'media.css',
+            'themes.css',
+            'about.css',
+            'nav-menus.css',
+            'widgets.css',
+            'site-icon.css',
+            'l10n.css',
+            'site-health.css',
+        ];
+
+        $css = array_map(
+            fn (string $file): string => $base . '/' . $file,
+            $files
+        );
+        $css[] = $base . '/colors/blue/colors.css';
+
+        return [
+            'css' => $css,
+            'js'  => [],
+        ];
+    }
+
     public function renderLayout(string $content, array $args = []): string
     {
         $initialState = $args['initialState'] ?? [];
@@ -109,14 +142,6 @@ class WordPressSkin implements SkinInterface
         } catch (\Throwable) {
             return "<!-- component {$component} not found -->";
         }
-    }
-
-    public function getAssets(): array
-    {
-        return [
-            'css' => [],
-            'js' => [],
-        ];
     }
 
     public static function iconClass(?string $icon): string
