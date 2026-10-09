@@ -57,8 +57,12 @@ class BridgeServiceProvider extends ServiceProvider
     {
         $prefix = $this->app->make('wp-bridge.table_prefix');
 
-        putenv("PW_TABLE_PREFIX={$prefix}");
-        $_ENV['PW_TABLE_PREFIX'] = $prefix;
+        // Only set PW_TABLE_PREFIX if not already set in environment
+        // This allows .env to override the WordPress config prefix
+        if (getenv('PW_TABLE_PREFIX') === false) {
+            putenv("PW_TABLE_PREFIX={$prefix}");
+            $_ENV['PW_TABLE_PREFIX'] = $prefix;
+        }
 
         $wpBridgeModels = $this->app->basePath('vendor/prestoworld/wp-bridge/src/Models');
         if (is_dir($wpBridgeModels)) {
