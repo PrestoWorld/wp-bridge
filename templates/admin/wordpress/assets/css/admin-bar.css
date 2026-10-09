@@ -102,6 +102,42 @@ html:lang(he-il) .rtl #wpadminbar * {
 	outline: 1px solid transparent;
 }
 
+/* Dashicons in admin bar */
+#wpadminbar .ab-icon.dashicons-before {
+	display: inline-block;
+	font-family: dashicons;
+	font-size: 20px;
+	line-height: 1;
+	width: 20px;
+	height: 20px;
+	text-align: center;
+	vertical-align: middle;
+	margin-right: 4px;
+}
+
+#wpadminbar .ab-icon.dashicons-before:before {
+	font-family: dashicons;
+	font-size: 20px;
+	line-height: 1;
+	vertical-align: middle;
+}
+
+/* Admin bar icon hover */
+#wpadminbar .quicklinks .menupop > a.ab-item:hover .ab-icon.dashicons-before,
+#wpadminbar .quicklinks .menupop > a.ab-item:focus .ab-icon.dashicons-before {
+	color: #72aee6;
+}
+
+/* WP logo icon */
+#wpadminbar #wp-admin-bar-wp-logo .ab-icon.dashicons-before {
+	color: #f0f0f1;
+}
+
+#wpadminbar #wp-admin-bar-wp-logo:hover .ab-icon.dashicons-before,
+#wpadminbar #wp-admin-bar-wp-logo:focus .ab-icon.dashicons-before {
+	color: #72aee6;
+}
+
 #wpadminbar .ab-sub-wrapper,
 #wpadminbar ul,
 #wpadminbar ul li {

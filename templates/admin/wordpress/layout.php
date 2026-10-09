@@ -13,6 +13,8 @@
  * @var string $content
  */
 
+use PrestoWorld\Bridge\WordPress\Admin\Dashicons;
+
 // Extended screen URL map — overrides WordPressSkin::SCREEN_URLS
 $__screenUrlMap = [
     'dashboard' => 'index.php',
@@ -103,6 +105,132 @@ $__cssFiles = [
             padding-top: 32px;
         }
         .presto-content-area { min-height: 400px; }
+
+        /* Menu icon rendering — ensure dashicons render properly in menu */
+        #adminmenu div.wp-menu-image {
+            float: left;
+            width: 36px;
+            height: 34px;
+            margin: 0;
+            text-align: center;
+        }
+        #adminmenu div.wp-menu-image svg,
+        #adminmenu div.wp-menu-image img {
+            display: none;
+        }
+        #adminmenu div.wp-menu-image .dashicons-before {
+            display: inline-block;
+            font-family: dashicons;
+            font-size: 20px;
+            line-height: 1;
+            padding: 7px 0;
+            color: #a7aaad;
+            color: rgba(240, 246, 252, 0.6);
+            transition: all .1s ease-in-out;
+        }
+        /* Hover state for menu icons */
+        #adminmenu li:hover div.wp-menu-image .dashicons-before,
+        #adminmenu li a:focus div.wp-menu-image .dashicons-before,
+        #adminmenu li.opensub div.wp-menu-image .dashicons-before {
+            color: #72aee6;
+        }
+        /* Active/current menu icon */
+        #adminmenu li.wp-has-current-submenu:hover div.wp-menu-image .dashicons-before,
+        #adminmenu .wp-has-current-submenu div.wp-menu-image .dashicons-before,
+        #adminmenu .current div.wp-menu-image .dashicons-before,
+        #adminmenu a.wp-has-current-submenu:hover div.wp-menu-image .dashicons-before,
+        #adminmenu a.current:hover div.wp-menu-image .dashicons-before,
+        #adminmenu li.wp-has-current-submenu a:focus div.wp-menu-image .dashicons-before,
+        #adminmenu li.wp-has-current-submenu.opensub div.wp-menu-image .dashicons-before {
+            color: #fff;
+        }
+        /* Admin bar icons */
+        #wpadminbar .ab-icon.dashicons-before {
+            display: inline-block;
+            font-family: dashicons;
+            font-size: 20px;
+            line-height: 1;
+            width: 20px;
+            height: 20px;
+            text-align: center;
+        }
+        /* Collapse button icon */
+        #collapse-button .collapse-button-icon {
+            display: inline-block;
+            font-family: dashicons;
+            font-size: 20px;
+            line-height: 1;
+        }
+        #collapse-button .collapse-button-icon:before {
+            content: "\f148";
+        }
+        .folded #collapse-button .collapse-button-icon:before {
+            content: "\f140";
+        }
+
+        /* Submenu flyout behavior */
+        #adminmenu li.wp-not-current-submenu:hover .wp-submenu,
+        #adminmenu li.wp-not-current-submenu:focus-within .wp-submenu,
+        #adminmenu li.opensub .wp-submenu {
+            top: -1px;
+            display: block;
+        }
+
+        /* Ensure submenu is hidden by default for non-current items */
+        #adminmenu li.wp-not-current-submenu .wp-submenu {
+            display: none;
+            top: -1000em;
+        }
+
+        /* Flyout arrow for submenu */
+        #adminmenu li.wp-has-submenu.wp-not-current-submenu:hover:after,
+        #adminmenu li.wp-has-submenu.wp-not-current-submenu:focus-within:after {
+            right: 0;
+            border: 8px solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+            top: 10px;
+            z-index: 10000;
+            border-right-color: #2c3338;
+        }
+
+        /* Menu item hover background */
+        #adminmenu li.menu-top:hover,
+        #adminmenu li.opensub > a.menu-top,
+        #adminmenu li > a.menu-top:focus {
+            position: relative;
+            background-color: #1d2327;
+            color: #72aee6;
+        }
+
+        /* Current menu item */
+        #adminmenu li.wp-has-current-submenu a.wp-has-current-submenu,
+        #adminmenu li.current a.menu-top,
+        #adminmenu .wp-has-current-submenu .wp-submenu .wp-submenu-head {
+            background: #2271b1;
+            color: #fff;
+        }
+
+        /* Submenu item hover */
+        #adminmenu .wp-submenu a:hover,
+        #adminmenu .wp-submenu a:focus {
+            color: #72aee6;
+            box-shadow: inset 4px 0 0 0 currentColor;
+            transition: box-shadow .1s linear;
+        }
+
+        /* Submenu current item */
+        #adminmenu .wp-submenu li.current,
+        #adminmenu .wp-submenu li.current a,
+        #adminmenu .opensub .wp-submenu li.current a,
+        #adminmenu a.wp-has-current-submenu:focus + .wp-submenu li.current a,
+        #adminmenu .wp-submenu li.current a:hover,
+        #adminmenu .wp-submenu li.current a:focus {
+            color: #fff;
+        }
     </style>
 
     <script>
@@ -123,7 +251,7 @@ $adminBarItems = $adminBar['items'] ?? [];
         <ul id="wp-admin-bar-root-default" class="ab-top-menu">
             <li id="wp-admin-bar-wp-logo" class="menupop">
                 <a class="ab-item" aria-haspopup="true" href="/" tabindex="0">
-                    <span class="ab-icon" aria-hidden="true"></span>
+                    <span class="ab-icon dashicons-before dashicons-wordpress" aria-hidden="true"></span>
                     <span class="screen-reader-text">About PrestoWorld</span>
                 </a>
             </li>
@@ -132,13 +260,13 @@ $adminBarItems = $adminBar['items'] ?? [];
             </li>
             <li id="wp-admin-bar-comments" class="menupop">
                 <a class="ab-item" aria-haspopup="true" href="/wp-admin/edit-comments.php">
-                    <span class="ab-icon" aria-hidden="true"></span>
+                    <span class="ab-icon dashicons-before dashicons-admin-comments" aria-hidden="true"></span>
                     <span id="ab-awaiting-mod" class="ab-label awaiting-mod pending-count count-0" aria-hidden="true">0</span>
                 </a>
             </li>
             <li id="wp-admin-bar-new-content" class="menupop">
                 <a class="ab-item" aria-haspopup="true" href="/wp-admin/post-new.php">
-                    <span class="ab-icon" aria-hidden="true"></span>
+                    <span class="ab-icon dashicons-before dashicons-plus-alt" aria-hidden="true"></span>
                     <span class="ab-label">New</span>
                 </a>
             </li>
@@ -149,13 +277,13 @@ $adminBarItems = $adminBar['items'] ?? [];
                 <?php if (($item['type'] ?? '') === 'link'): ?>
                 <a class="ab-item" href="<?= htmlspecialchars($item['href'] ?? '#') ?>">
                     <?php if (!empty($item['icon'])): ?>
-                    <span class="ab-icon" data-icon="<?= htmlspecialchars($item['icon']) ?>"></span>
+                    <?= Dashicons::adminBarIcon($item['icon']) ?>
                     <?php endif; ?>
                     <?= htmlspecialchars($item['label'] ?? '') ?>
                 </a>
                 <?php elseif (($item['type'] ?? '') === 'notification'): ?>
                 <a class="ab-item" href="#">
-                    <span class="ab-icon" data-icon="<?= htmlspecialchars($item['icon'] ?? 'Bell') ?>"></span>
+                    <?= Dashicons::adminBarIcon($item['icon'] ?? 'Bell') ?>
                     <span class="ab-label"><?= htmlspecialchars((string)($item['badge'] ?? '')) ?></span>
                 </a>
                 <?php else: ?>
@@ -220,9 +348,7 @@ $currentScreenTitle = $screenMap[$activeScreen] ?? 'Dashboard';
                     <a href="<?= htmlspecialchars($__screenUrl($sectionScreenId)) ?>"
                        class="<?= $anyChildActive ? 'wp-has-current-submenu wp-menu-open menu-top' : 'wp-not-current-submenu menu-top' ?>"
                        <?= $sectionHasChildren ? 'aria-haspopup="true"' : '' ?>>
-                        <div class="wp-menu-image" data-icon="<?= htmlspecialchars($sectionIcon) ?>" aria-hidden="true">
-                            <span class="wp-menu-icon-placeholder"></span>
-                        </div>
+                        <?= Dashicons::menuImage($sectionIcon) ?>
                         <div class="wp-menu-name"><?= htmlspecialchars($sectionLabel) ?></div>
                     </a>
                     <?php if ($sectionHasChildren): ?>
@@ -346,6 +472,40 @@ document.getElementById('collapse-button')?.addEventListener('click', function()
     var expanded = this.getAttribute('aria-expanded') === 'true';
     this.setAttribute('aria-expanded', String(!expanded));
 });
+
+// Menu hover behavior — submenu flyout
+(function() {
+    var menuItems = document.querySelectorAll('#adminmenu li.menu-top');
+    menuItems.forEach(function(item) {
+        var link = item.querySelector('a.menu-top');
+        var submenu = item.querySelector('.wp-submenu');
+        if (!link || !submenu) return;
+
+        // Add hover class for CSS flyout
+        item.addEventListener('mouseenter', function() {
+            if (item.classList.contains('wp-not-current-submenu')) {
+                item.classList.add('opensub');
+            }
+        });
+        item.addEventListener('mouseleave', function() {
+            if (item.classList.contains('wp-not-current-submenu')) {
+                item.classList.remove('opensub');
+            }
+        });
+
+        // Focus behavior
+        link.addEventListener('focus', function() {
+            if (item.classList.contains('wp-not-current-submenu')) {
+                item.classList.add('opensub');
+            }
+        });
+        link.addEventListener('blur', function() {
+            if (item.classList.contains('wp-not-current-submenu')) {
+                item.classList.remove('opensub');
+            }
+        });
+    });
+})();
 </script>
 </body>
 </html>

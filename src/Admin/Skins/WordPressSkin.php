@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace PrestoWorld\Bridge\WordPress\Admin\Skins;
 
+use PrestoWorld\Bridge\WordPress\Admin\Dashicons;
 use PrestoWorld\Contracts\Admin\SkinInterface;
 use Witals\Framework\Contracts\View\Factory as ViewFactory;
 
@@ -20,30 +21,6 @@ class WordPressSkin implements SkinInterface
         'settings'  => 'options-general.php',
     ];
 
-    protected const ICON_MAP = [
-        'LayoutDashboard'  => 'dashicons-dashboard',
-        'FileText'         => 'dashicons-admin-post',
-        'Puzzle'           => 'dashicons-admin-plugins',
-        'Settings'         => 'dashicons-admin-settings',
-        'Globe'            => 'dashicons-admin-site',
-        'Bell'             => 'dashicons-bell',
-        'Plus'             => 'dashicons-plus-alt',
-        'Circle'           => 'dashicons-marker',
-        'Blocks'           => 'dashicons-admin-plugins',
-        'MessageSquare'    => 'dashicons-admin-comments',
-        'Wrench'           => 'dashicons-admin-tools',
-        'Sparkles'         => 'dashicons-star-filled',
-        'RefreshCw'        => 'dashicons-update',
-        'ShieldAlert'      => 'dashicons-shield',
-        'Activity'         => 'dashicons-chart-line',
-        'Menu'             => 'dashicons-menu',
-        'X'                => 'dashicons-no',
-        'Check'            => 'dashicons-yes',
-        'Search'           => 'dashicons-search',
-        'User'             => 'dashicons-admin-users',
-        'BookOpen'         => 'dashicons-book',
-    ];
-
     public function __construct(ViewFactory $view)
     {
         $this->view = $view;
@@ -54,8 +31,8 @@ class WordPressSkin implements SkinInterface
     {
         return [
             'name'        => 'WordPress Classic',
-            'version'     => '1.0.0',
-            'description' => 'Classic WordPress admin skin with 100% SSR rendering',
+            'version'     => '1.1.0',
+            'description' => 'Classic WordPress admin skin with 100% SSR rendering and dashicons support',
             'mode'        => SkinInterface::MODE_SSR,
             'assets'      => [
                 'css' => ['wp-admin-css'],
@@ -78,6 +55,7 @@ class WordPressSkin implements SkinInterface
     {
         $base = '/wp-admin/assets/css';
         $files = [
+            'dashicons.css',
             'common.css',
             'forms.css',
             'admin-menu.css',
@@ -146,7 +124,7 @@ class WordPressSkin implements SkinInterface
 
     public static function iconClass(?string $icon): string
     {
-        return self::ICON_MAP[$icon] ?? 'dashicons-admin-generic';
+        return Dashicons::class($icon);
     }
 
     public static function screenUrl(string $screenId): string
