@@ -8,10 +8,10 @@ use Witals\Framework\Http\Request;
 use Witals\Framework\Http\Response;
 use PrestoWorld\Contracts\Admin\Menu\MenuContextRepository;
 use PrestoWorld\Contracts\Admin\Dashboard\DashboardWidgetRepository;
-use PrestoWorld\Modules\Admin\ScreenOptions\ScreenOption;
-use PrestoWorld\Modules\Admin\ScreenOptions\ScreenOptionsContext;
-use PrestoWorld\Modules\Admin\AdminBar\AdminBarItem;
-use PrestoWorld\Modules\Admin\AdminBar\AdminBarContext;
+use PrestoWorld\Admin\ScreenOptions\ScreenOption;
+use PrestoWorld\Admin\ScreenOptions\ScreenOptionsContext;
+use PrestoWorld\Admin\AdminBar\AdminBarItem;
+use PrestoWorld\Admin\AdminBar\AdminBarContext;
 use Witals\Framework\Contracts\Container;
 
 class WpAdminController
@@ -107,7 +107,7 @@ class WpAdminController
 
     protected function resolveSkin(string $path, Request $request): mixed
     {
-        $skins = $this->container->make(\PrestoWorld\Modules\Admin\SkinManager::class);
+        $skins = $this->container->make(\PrestoWorld\Admin\SkinManager::class);
 
         if (str_starts_with($path, '/wp-admin')) {
             if ($skins->hasSkin('wordpress-classic')) {
