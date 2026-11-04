@@ -13,6 +13,7 @@ use PrestoWorld\Admin\ScreenOptions\ScreenOptionsContext;
 use PrestoWorld\Admin\AdminBar\AdminBarItem;
 use PrestoWorld\Admin\AdminBar\AdminBarContext;
 use Witals\Framework\Contracts\Container;
+use PrestoWorld\Bridge\WordPress\Admin\Integration\SharedAdminBridge;
 
 class WpAdminController
 {
@@ -173,26 +174,43 @@ class WpAdminController
 
     protected function buildMenuSections(): array
     {
-        $menuTree = $this->menu->getTreeAsArray();
+        $menuTree = [];
+        try {
+            $bridge = new SharedAdminBridge($this->container);
+            $shared = $bridge->getSharedMenuTree();
+            if (is_array($shared) && !empty($shared)) {
+                $menuTree = $shared;
+            }
+        } catch (\Throwable $e) {
+        }
+
+        if (empty($menuTree)) {
+            try {
+                $menuTree = $this->menu->getTreeAsArray();
+            } catch (\Throwable $e) {
+                $menuTree = [];
+            }
+        }
+
         $sections = [];
 
         foreach ($menuTree as $i => $group) {
             $children = $group['children'] ?? [];
 
             $firstChild = $children[0] ?? [];
-            $screenId = $firstChild['screenId'] ?? $firstChild['id'] ?? '';
+            $screenId = $firstChild['screenId'] ?? $firstChild['id'] ?? ($group['screenId'] ?? $group['id'] ?? '');
             $icon = $firstChild['icon'] ?? $group['icon'] ?? 'Circle';
 
             $sections[] = [
                 'id' => $group['id'] ?? 'section-' . $i,
-                'title' => $group['label'] ?? '',
+                'title' => $group['label'] ?? $group['title'] ?? '',
                 'priority' => $group['priority'] ?? 10,
                 'icon' => $icon,
                 'screenId' => $screenId,
                 'items' => array_map(fn(array $child) => [
                     'id' => $child['id'] ?? $child['screenId'] ?? '',
                     'screenId' => $child['screenId'] ?? $child['id'] ?? '',
-                    'label' => $child['label'] ?? '',
+                    'label' => $child['label'] ?? $child['title'] ?? '',
                     'icon' => $child['icon'] ?? $icon,
                     'url' => $child['url'] ?? '',
                     'priority' => $child['priority'] ?? 10,
