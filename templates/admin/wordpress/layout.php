@@ -55,8 +55,8 @@ $__screenUrl = function (string $screenId) use ($__screenUrlMap): string {
     return $__screenUrlMap[$screenId] ?? \PrestoWorld\Bridge\WordPress\Admin\Skins\WordPressSkin::screenUrl($screenId);
 };
 
-$__assetBase = '/wp-admin/assets/css';
-$__fontBase = '/wp-admin/assets/fonts';
+$__assetBase = '/assets/wp-admin/css';
+$__fontBase = '/assets/wp-admin/fonts';
 $__cssFiles = [
     'dashicons.css',
     'admin-bar.css',
