@@ -174,6 +174,13 @@ class WpAdminController
 
     protected function buildMenuSections(): array
     {
+        // Ensure WordPress core menus are present in the standardized menu stack.
+        $coreSections = [];
+        try {
+            $coreSections = \PrestoWorld\Bridge\WordPress\Admin\Menu\WordPressCoreMenu::buildClassicSections($this->menu);
+        } catch (\Throwable $e) {
+        }
+
         $menuTree = [];
         try {
             $bridge = new SharedAdminBridge($this->container);
@@ -184,41 +191,106 @@ class WpAdminController
         } catch (\Throwable $e) {
         }
 
-        if (empty($menuTree)) {
-            try {
-                $menuTree = $this->menu->getTreeAsArray();
-            } catch (\Throwable $e) {
-                $menuTree = [];
-            }
+        // Always include repository menus (modules/extensions registered there).
+        $repoSections = [];
+        try {
+            $repoSections = $this->normalizeClassicSections($this->menu->getTree());
+        } catch (\Throwable $e) {
+            $repoSections = [];
         }
 
+        $sharedSections = [];
+        if (!empty($menuTree)) {
+            $sharedSections = $this->normalizeClassicSections($menuTree);
+        }
+
+        // Merge: WordPress core first, then repo, then shared (dedupe by id).
+        $merged = [];
+        $seen = [];
+        foreach (array_merge($coreSections, $repoSections, $sharedSections) as $section) {
+            if (!is_array($section)) {
+                continue;
+            }
+            $id = (string) ($section['id'] ?? '');
+            if ($id !== '' && isset($seen[$id])) {
+                continue;
+            }
+            if ($id !== '') {
+                $seen[$id] = true;
+            }
+            $merged[] = $section;
+        }
+
+        // For classic wp-admin, keep WordPress-like menu groups (core + shim-registered menu-*).
+        $merged = array_values(array_filter($merged, static function (array $section): bool {
+            $id = (string) ($section['id'] ?? '');
+            return str_starts_with($id, 'menu-');
+        }));
+
+        usort($merged, static fn(array $a, array $b) => ($a['priority'] ?? 0) <=> ($b['priority'] ?? 0));
+        return $merged;
+    }
+
+    /**
+     * Normalize repository/core menu trees into the flat classic layout shape.
+     *
+     * @param array<mixed> $tree
+     * @return list<array<string,mixed>>
+     */
+    protected function normalizeClassicSections(array $tree): array
+    {
         $sections = [];
+        foreach ($tree as $i => $node) {
+            if (!is_array($node)) {
+                continue;
+            }
+            // Standard MenuContextRepository tree: section -> groups -> children/items
+            if (isset($node['groups']) && is_array($node['groups'])) {
+                foreach ($node['groups'] as $group) {
+                    if (!is_array($group)) {
+                        continue;
+                    }
+                    $sections[] = $this->normalizeClassicGroup($group, $node);
+                }
+                continue;
+            }
+            $sections[] = $this->normalizeClassicGroup($node, []);
+        }
+        return $sections;
+    }
 
-        foreach ($menuTree as $i => $group) {
-            $children = $group['children'] ?? [];
-
-            $firstChild = $children[0] ?? [];
-            $screenId = $firstChild['screenId'] ?? $firstChild['id'] ?? ($group['screenId'] ?? $group['id'] ?? '');
-            $icon = $firstChild['icon'] ?? $group['icon'] ?? 'Circle';
-
-            $sections[] = [
-                'id' => $group['id'] ?? 'section-' . $i,
-                'title' => $group['label'] ?? $group['title'] ?? '',
-                'priority' => $group['priority'] ?? 10,
-                'icon' => $icon,
-                'screenId' => $screenId,
-                'items' => array_map(fn(array $child) => [
-                    'id' => $child['id'] ?? $child['screenId'] ?? '',
-                    'screenId' => $child['screenId'] ?? $child['id'] ?? '',
-                    'label' => $child['label'] ?? $child['title'] ?? '',
-                    'icon' => $child['icon'] ?? $icon,
-                    'url' => $child['url'] ?? '',
-                    'priority' => $child['priority'] ?? 10,
-                ], $children),
+    /**
+     * @param array<string,mixed> $group
+     * @param array<string,mixed> $parent
+     * @return array<string,mixed>
+     */
+    protected function normalizeClassicGroup(array $group, array $parent): array
+    {
+        $children = $group['children'] ?? $group['items'] ?? [];
+        $items = [];
+        foreach (is_array($children) ? $children : [] as $child) {
+            if (!is_array($child)) {
+                continue;
+            }
+            $items[] = [
+                'id' => $child['id'] ?? $child['screenId'] ?? '',
+                'screenId' => $child['screenId'] ?? $child['id'] ?? '',
+                'label' => $child['label'] ?? $child['title'] ?? '',
+                'icon' => $child['icon'] ?? ($group['icon'] ?? ($parent['icon'] ?? 'dashicons-admin-generic')),
+                'url' => $child['url'] ?? '',
+                'priority' => $child['priority'] ?? 10,
             ];
         }
-
-        return $sections;
+        usort($items, static fn(array $a, array $b) => ($a['priority'] ?? 0) <=> ($b['priority'] ?? 0));
+        $first = $items[0] ?? [];
+        return [
+            'id' => $group['id'] ?? ($parent['id'] ?? 'section'),
+            'title' => $group['label'] ?? $group['title'] ?? ($parent['label'] ?? ''),
+            'priority' => $group['priority'] ?? ($parent['priority'] ?? 10),
+            'icon' => $group['icon'] ?? ($parent['icon'] ?? 'dashicons-admin-generic'),
+            'screenId' => $first['screenId'] ?? ($group['screenId'] ?? ($group['id'] ?? '')),
+            'items' => $items,
+        ];
     }
 
     protected function buildWidgets(): array

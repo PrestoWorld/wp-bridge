@@ -337,9 +337,13 @@ $currentScreenTitle = $screenMap[$activeScreen] ?? 'Dashboard';
 
                 $firstItem = $sectionItems[0];
                 $sectionScreenId = $section['screenId'] ?? $firstItem['screenId'] ?? '';
-                $sectionIcon = $section['icon'] ?? $firstItem['icon'] ?? 'Circle';
-                $sectionLabel = $section['title'] ?: $firstItem['label'] ?? '';
+                $sectionIcon = $section['icon'] ?? $firstItem['icon'] ?? 'dashicons-admin-generic';
+                $sectionLabel = $section['title'] ?: ($firstItem['label'] ?? '');
                 $sectionHasChildren = count($sectionItems) > 1;
+                $sectionUrl = (string) ($section['url'] ?? ($firstItem['url'] ?? ''));
+                if ($sectionUrl === '') {
+                    $sectionUrl = $__screenUrl($sectionScreenId);
+                }
 
                 $anyChildActive = false;
                 foreach ($sectionItems as $item) {
@@ -352,25 +356,29 @@ $currentScreenTitle = $screenMap[$activeScreen] ?? 'Dashboard';
                 if ($sectionIndex > 0): ?>
                 <li class="wp-menu-separator" role="presentation"><div class="separator"></div></li>
                 <?php endif; ?>
-                <li class="menu-top menu-icon-<?= htmlspecialchars($sectionScreenId) ?> <?= $anyChildActive ? 'wp-has-current-submenu wp-menu-open' : 'wp-not-current-submenu' ?>">
-                    <a href="<?= htmlspecialchars($__screenUrl($sectionScreenId)) ?>"
+                <li class="menu-top menu-icon-<?= htmlspecialchars((string) $sectionScreenId) ?> <?= $anyChildActive ? 'wp-has-current-submenu wp-menu-open' : 'wp-not-current-submenu' ?>">
+                    <a href="<?= htmlspecialchars($sectionUrl) ?>"
                        class="<?= $anyChildActive ? 'wp-has-current-submenu wp-menu-open menu-top' : 'wp-not-current-submenu menu-top' ?>"
                        <?= $sectionHasChildren ? 'aria-haspopup="true"' : '' ?>>
                         <?= Dashicons::menuImage($sectionIcon) ?>
-                        <div class="wp-menu-name"><?= htmlspecialchars($sectionLabel) ?></div>
+                        <div class="wp-menu-name"><?= htmlspecialchars((string) $sectionLabel) ?></div>
                     </a>
                     <?php if ($sectionHasChildren): ?>
                     <ul class="wp-submenu wp-submenu-wrap">
-                        <li class="wp-submenu-head" aria-hidden="true"><?= htmlspecialchars($sectionLabel) ?></li>
+                        <li class="wp-submenu-head" aria-hidden="true"><?= htmlspecialchars((string) $sectionLabel) ?></li>
                         <?php foreach ($sectionItems as $i => $item):
                             $childScreenId = $item['screenId'] ?? '';
                             $isChildActive = $childScreenId === $activeScreen;
+                            $childUrl = (string) ($item['url'] ?? '');
+                            if ($childUrl === '') {
+                                $childUrl = $__screenUrl((string) $childScreenId);
+                            }
                         ?>
                         <li class="<?= $i === 0 ? 'wp-first-item ' : '' ?><?= $isChildActive ? 'current' : '' ?>">
-                            <a href="<?= htmlspecialchars($__screenUrl($childScreenId)) ?>"
+                            <a href="<?= htmlspecialchars($childUrl) ?>"
                                class="<?= $isChildActive ? 'current' : '' ?>"
                                aria-current="<?= $isChildActive ? 'page' : 'false' ?>">
-                                <?= htmlspecialchars($item['label'] ?? '') ?>
+                                <?= htmlspecialchars((string) ($item['label'] ?? '')) ?>
                             </a>
                         </li>
                         <?php endforeach; ?>
