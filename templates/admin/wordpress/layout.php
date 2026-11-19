@@ -162,19 +162,6 @@ $__cssFiles = [
             height: 20px;
             text-align: center;
         }
-        /* Collapse button icon */
-        #collapse-button .collapse-button-icon {
-            display: inline-block;
-            font-family: dashicons;
-            font-size: 20px;
-            line-height: 1;
-        }
-        #collapse-button .collapse-button-icon:before {
-            content: "\f148";
-        }
-        .folded #collapse-button .collapse-button-icon:before {
-            content: "\f140";
-        }
 
         /* Submenu flyout behavior */
         #adminmenu li.wp-not-current-submenu:hover .wp-submenu,
